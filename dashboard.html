@@ -2,494 +2,508 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Screen Time — Tracker</title>
+<title>Screen Time</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-  :root{
-    --ink:#1b1d22;
-    --paper:#f6f4ef;
-    --line:#d9d4c7;
-    --accent:#3f6b52;     /* deep moss green — calm, growth */
-    --accent-soft:#cddccf;
-    --warn:#a9462f;       /* rust — for the apps working against her */
-    --warn-soft:#ecd6cd;
-    --muted:#7a766c;
-    --card:#ffffff;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    background:var(--paper);
-    color:var(--ink);
-    font-family: 'Iowan Old Style','Georgia',serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .util{font-family:'Courier New',monospace; letter-spacing:0.04em;}
-  header{
-    padding:48px 40px 28px;
-    border-bottom:1px solid var(--line);
-  }
-  header h1{
-    margin:0 0 6px;
-    font-size:34px;
-    font-weight:400;
-    letter-spacing:-0.01em;
-  }
-  header p{
-    margin:0;
-    color:var(--muted);
-    font-size:14px;
-    text-transform:uppercase;
-    letter-spacing:0.08em;
-  }
-  .wrap{ max-width:1080px; margin:0 auto; padding:0 40px 80px; }
-  .toprow{
-    display:flex; justify-content:space-between; align-items:flex-end;
-    flex-wrap:wrap; gap:16px;
-  }
-  .status{
-    font-size:13px; color:var(--muted); text-align:right;
-  }
-  .status.connected{ color:var(--accent); }
-  .status.connected::before{ content:"● "; }
-  .status.disconnected::before{ content:"○ "; }
+:root{
+  --ink:#1b1d22; --paper:#f6f4ef; --line:#d9d4c7;
+  --accent:#3f6b52; --warn:#a9462f;
+  --muted:#7a766c; --card:#ffffff;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+html,body{height:100%; overflow:hidden; background:var(--paper); color:var(--ink); font-family:'Georgia',serif;}
 
-  section{ margin-top:48px; }
-  .section-label{
-    font-family:'Courier New',monospace;
-    font-size:12px;
-    text-transform:uppercase;
-    letter-spacing:0.12em;
-    color:var(--muted);
-    margin-bottom:14px;
-  }
+/* LAYOUT */
+.shell{
+  height:100vh;
+  display:grid;
+  grid-template-rows:auto auto 1fr auto;
+  grid-template-columns:1fr 1fr;
+  grid-template-areas:
+    "header header"
+    "stats  stats"
+    "chart  table"
+    "footer footer";
+  gap:0;
+}
 
-  .stat-grid{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:1px;
-    background:var(--line);
-    border:1px solid var(--line);
-  }
-  .stat{
-    background:var(--card);
-    padding:22px 20px;
-  }
-  .stat .label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
-  .stat .value{ font-size:28px; margin-top:6px; }
-  .stat .delta{ font-size:13px; margin-top:4px; }
-  .delta.down{ color:var(--accent); }
-  .delta.up{ color:var(--warn); }
+/* HEADER */
+header{
+  grid-area:header;
+  padding:14px 28px 12px;
+  border-bottom:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center;
+}
+header h1{font-size:20px; font-weight:400; letter-spacing:-0.01em;}
+header p{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;}
+.hdr-right{display:flex; gap:10px; align-items:center;}
+.btn-sm{
+  font-family:inherit; font-size:12px; padding:6px 12px; cursor:pointer;
+  border:1px solid var(--line); background:var(--card); color:var(--ink);
+}
+.btn-sm.primary{background:var(--ink); color:var(--paper); border-color:var(--ink);}
+.btn-sm:hover{opacity:0.8;}
+.storage-dot{font-size:11px; color:var(--muted); font-family:monospace;}
+.storage-dot.ok{color:var(--accent);}
 
-  .chart-card{
-    background:var(--card);
-    border:1px solid var(--line);
-    padding:24px;
-    margin-bottom:20px;
-  }
-  .chart-card h3{ margin:0 0 16px; font-weight:400; font-size:17px; }
-  canvas{ max-height:280px; }
+/* STATS */
+.stats{
+  grid-area:stats;
+  display:grid; grid-template-columns:repeat(4,1fr);
+  border-bottom:1px solid var(--line);
+}
+.stat{
+  padding:12px 20px;
+  border-right:1px solid var(--line);
+}
+.stat:last-child{border-right:none;}
+.stat .lbl{font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted);}
+.stat .val{font-size:22px; margin-top:3px;}
+.stat .sub{font-size:11px; color:var(--muted); margin-top:2px;}
+.delta-down{color:var(--accent);}
+.delta-up{color:var(--warn);}
 
-  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); }
-  th,td{ text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); font-size:14px; }
-  th{ font-family:'Courier New',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); background:#faf9f5; }
-  tr:last-child td{ border-bottom:none; }
-  .note-tag{ font-size:12px; color:var(--warn); }
+/* CHART PANEL */
+.chart-panel{
+  grid-area:chart;
+  border-right:1px solid var(--line);
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.tabs{
+  display:flex; border-bottom:1px solid var(--line);
+}
+.tab{
+  flex:1; padding:9px 0; text-align:center; font-size:12px;
+  text-transform:uppercase; letter-spacing:0.07em; cursor:pointer;
+  background:none; border:none; border-right:1px solid var(--line);
+  color:var(--muted); font-family:inherit;
+}
+.tab:last-child{border-right:none;}
+.tab.active{background:var(--card); color:var(--ink); font-weight:bold;}
+.chart-wrap{flex:1; padding:16px; position:relative; min-height:0;}
+.chart-wrap canvas{width:100%!important; height:100%!important;}
+.empty-chart{
+  position:absolute; inset:0; display:flex; align-items:center;
+  justify-content:center; color:var(--muted); font-style:italic; font-size:14px;
+}
 
-  form{
-    background:var(--card);
-    border:1px solid var(--line);
-    padding:24px;
-  }
-  .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
-  .form-row.full{ grid-template-columns:1fr; }
-  label{ display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:6px; }
-  input[type=text], input[type=number], input[type=date]{
-    width:100%; padding:10px 12px; border:1px solid var(--line); background:var(--paper);
-    font-family:inherit; font-size:14px; color:var(--ink);
-  }
-  input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+/* TABLE PANEL */
+.table-panel{
+  grid-area:table;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+.panel-label{
+  padding:9px 18px; font-size:10px; text-transform:uppercase;
+  letter-spacing:0.09em; color:var(--muted); border-bottom:1px solid var(--line);
+  background:#faf9f5;
+}
+.table-scroll{flex:1; overflow-y:auto;}
+table{width:100%; border-collapse:collapse; font-size:12px;}
+th{
+  position:sticky; top:0; background:#faf9f5;
+  padding:7px 12px; text-align:left; font-size:10px;
+  text-transform:uppercase; letter-spacing:0.06em; color:var(--muted);
+  border-bottom:1px solid var(--line);
+}
+td{padding:7px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+tr:last-child td{border-bottom:none;}
+.app-chip{
+  display:inline-block; background:var(--paper); border:1px solid var(--line);
+  border-radius:2px; padding:1px 5px; margin:1px 2px 1px 0; font-size:10px;
+}
+.note-cell{color:var(--warn); font-size:11px; font-style:italic;}
 
-  #appRows{ margin-bottom:14px; }
-  .app-row{ display:grid; grid-template-columns:2fr 1fr auto; gap:10px; margin-bottom:8px; align-items:center; }
-  .app-row button{
-    background:none; border:1px solid var(--line); color:var(--warn);
-    width:34px; height:38px; cursor:pointer; font-size:16px;
-  }
-  .btn-row{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
-  button.primary, button.secondary{
-    font-family:inherit; font-size:14px; padding:11px 20px; cursor:pointer;
-    border:1px solid var(--ink); background:var(--ink); color:var(--paper);
-  }
-  button.secondary{ background:var(--card); color:var(--ink); }
-  button.add-app{
-    background:none; border:1px dashed var(--line); color:var(--muted);
-    padding:9px 14px; font-size:13px; cursor:pointer; width:100%;
-  }
-  button:hover{ opacity:0.85; }
+/* FOOTER */
+footer{
+  grid-area:footer;
+  padding:7px 28px;
+  border-top:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center;
+}
+footer span{font-size:11px; color:var(--muted);}
 
-  .connect-banner{
-    background:var(--warn-soft); border:1px solid var(--warn);
-    padding:16px 20px; font-size:14px; margin-bottom:20px;
-  }
-  .connect-banner button{
-    font-family:inherit; background:var(--warn); color:#fff; border:none;
-    padding:8px 16px; cursor:pointer; margin-left:10px; font-size:13px;
-  }
-  .empty{ color:var(--muted); font-style:italic; padding:30px; text-align:center; }
-  footer{ text-align:center; color:var(--muted); font-size:12px; padding:30px 0 10px; }
+/* MODAL */
+.modal-overlay{
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,0.35); z-index:100;
+  align-items:center; justify-content:center;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:var(--card); border:1px solid var(--line);
+  width:520px; max-width:95vw; max-height:90vh;
+  display:flex; flex-direction:column;
+}
+.modal-head{
+  padding:16px 20px; border-bottom:1px solid var(--line);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.modal-head h2{font-size:16px; font-weight:400;}
+.modal-close{
+  background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);
+}
+.modal-body{padding:20px; overflow-y:auto; flex:1;}
+.form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
+.form-row.full{grid-template-columns:1fr;}
+label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:4px;}
+input[type=text],input[type=date],input[type=number]{
+  width:100%; padding:8px 10px; border:1px solid var(--line);
+  background:var(--paper); font-family:inherit; font-size:13px; color:var(--ink);
+}
+input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+.app-row{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:6px; align-items:center;}
+.app-row button{
+  background:none; border:1px solid var(--line); color:var(--warn);
+  width:30px; height:34px; cursor:pointer; font-size:16px; line-height:1;
+}
+.btn-add-app{
+  width:100%; padding:7px; background:none; border:1px dashed var(--line);
+  color:var(--muted); font-size:12px; cursor:pointer; margin:6px 0 14px; font-family:inherit;
+}
+.modal-foot{
+  padding:14px 20px; border-top:1px solid var(--line);
+  display:flex; gap:10px; justify-content:flex-end;
+}
+.btn-full{
+  font-family:inherit; font-size:13px; padding:9px 18px; cursor:pointer;
+  border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+}
+.btn-cancel{background:var(--card); color:var(--ink);}
+input[type=file]{display:none;}
 </style>
 </head>
 <body>
+<div class="shell">
 
-<header>
-  <div class="wrap" style="padding:0;">
-    <div class="toprow">
-      <div>
-        <h1>Screen Time — Tracker</h1>
-        <p>your weekly record, kept on your machine</p>
-      </div>
-      <div class="status disconnected util" id="storageStatus">data.json not connected</div>
+  <!-- HEADER -->
+  <header>
+    <div>
+      <h1>Screen Time</h1>
+      <p>your weekly record</p>
+    </div>
+    <div class="hdr-right">
+      <span class="storage-dot" id="storageDot">● browser storage</span>
+      <button class="btn-sm" id="loadBtn">Load data.json</button>
+      <button class="btn-sm" id="downloadBtn">Download data.json</button>
+      <button class="btn-sm primary" id="openModalBtn">+ Add Week</button>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats" id="statsBar">
+    <div class="stat"><div class="lbl">Weeks logged</div><div class="val" id="s-weeks">—</div><div class="sub" id="s-range">no data yet</div></div>
+    <div class="stat"><div class="lbl">Latest daily avg</div><div class="val" id="s-avg">—</div><div class="sub" id="s-avg-delta"></div></div>
+    <div class="stat"><div class="lbl">Latest Instagram</div><div class="val" id="s-ig">—</div><div class="sub" id="s-ig-delta"></div></div>
+    <div class="stat"><div class="lbl">Latest Forest</div><div class="val" id="s-forest">—</div><div class="sub" id="s-forest-delta"></div></div>
+  </div>
+
+  <!-- CHART -->
+  <div class="chart-panel">
+    <div class="tabs">
+      <button class="tab active" data-tab="avg">Daily Average</button>
+      <button class="tab" data-tab="ig">Instagram</button>
+      <button class="tab" data-tab="forest">Forest</button>
+    </div>
+    <div class="chart-wrap">
+      <div class="empty-chart" id="emptyChart">No data yet — add your first week</div>
+      <canvas id="mainChart" style="display:none;"></canvas>
     </div>
   </div>
-</header>
 
-<div class="wrap">
-
-  <div class="connect-banner" id="connectBanner">
-    Your data is currently saved in this browser only. Click <strong>Load data.json</strong> to bring in your saved file,
-    or <strong>Download data.json</strong> any time to save your current data to this folder.
-    <button id="loadBtn">Load data.json</button>
-    <button id="downloadBtn">Download data.json</button>
+  <!-- TABLE -->
+  <div class="table-panel">
+    <div class="panel-label">All weeks</div>
+    <div class="table-scroll">
+      <table id="weekTable">
+        <thead><tr><th>Week</th><th>Avg</th><th>Total</th><th>Apps</th><th>Note</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="5" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr></tbody>
+      </table>
+    </div>
   </div>
-  <input type="file" id="fileInput" accept=".json" style="display:none;">
 
-  <section>
-    <div class="section-label">Latest week vs. first week tracked</div>
-    <div class="stat-grid" id="statGrid"></div>
-  </section>
-
-  <section>
-    <div class="section-label">Daily average screen time</div>
-    <div class="chart-card"><canvas id="avgChart"></canvas></div>
-  </section>
-
-  <section>
-    <div class="section-label">Instagram</div>
-    <div class="chart-card"><canvas id="igChart"></canvas></div>
-  </section>
-
-  <section>
-    <div class="section-label">Forest — focused time</div>
-    <div class="chart-card"><canvas id="forestChart"></canvas></div>
-  </section>
-
-  <section>
-    <div class="section-label">All weeks logged</div>
-    <div id="tableWrap"></div>
-  </section>
-
-  <section>
-    <div class="section-label">Log a new week</div>
-    <form id="weekForm">
-      <div class="form-row">
-        <div>
-          <label>Week start</label>
-          <input type="date" id="weekStart" required>
-        </div>
-        <div>
-          <label>Week end</label>
-          <input type="date" id="weekEnd" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div>
-          <label>Daily average (e.g. 5h 46m)</label>
-          <input type="text" id="dailyAvg" placeholder="5h 46m" required>
-        </div>
-        <div>
-          <label>Total screen time (e.g. 40h 26m)</label>
-          <input type="text" id="totalTime" placeholder="40h 26m" required>
-        </div>
-      </div>
-      <div class="form-row full">
-        <div>
-          <label>Note (optional — e.g. "Eid week", "deleted Instagram")</label>
-          <input type="text" id="weekNote" placeholder="optional context">
-        </div>
-      </div>
-
-      <label style="margin-top:4px;">App breakdown</label>
-      <div id="appRows"></div>
-      <button type="button" class="add-app" id="addAppBtn">+ add app</button>
-
-      <div class="btn-row">
-        <button type="submit" class="primary">Save week</button>
-        <button type="button" class="secondary" id="exportBtn">Export backup (.json)</button>
-      </div>
-    </form>
-  </section>
-
-  <footer>kept locally · no account, no cloud, no tracking but your own</footer>
+  <!-- FOOTER -->
+  <footer>
+    <span>kept locally · no cloud</span>
+    <span id="lastSaved"></span>
+  </footer>
 </div>
 
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Add week</h2>
+      <button class="modal-close" id="closeModal">×</button>
+    </div>
+    <div class="modal-body">
+      <form id="weekForm">
+        <div class="form-row">
+          <div><label>Week start</label><input type="date" id="weekStart" required></div>
+          <div><label>Week end</label><input type="date" id="weekEnd" required></div>
+        </div>
+        <div class="form-row">
+          <div><label>Daily avg (e.g. 5h 46m)</label><input type="text" id="dailyAvg" placeholder="5h 46m" required></div>
+          <div><label>Total screen time</label><input type="text" id="totalTime" placeholder="40h 26m" required></div>
+        </div>
+        <div class="form-row full">
+          <div><label>Note (optional)</label><input type="text" id="weekNote" placeholder='e.g. "Eid week" or "deleted Instagram"'></div>
+        </div>
+        <label style="margin-top:4px;">App breakdown</label>
+        <div id="appRows" style="margin-top:8px;"></div>
+        <button type="button" class="btn-add-app" id="addAppBtn">+ add app</button>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-full btn-cancel" id="cancelModal">Cancel</button>
+      <button class="btn-full" id="saveWeekBtn">Save week</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept=".json">
+
 <script>
-let fileHandle = null;
 let weeks = [];
+let activeTab = 'avg';
+let chartInst = null;
 
-const SEED_DATA = [
-  { start:"2026-05-11", end:"2026-05-17", dailyAvg:"8h 33m", total:"59h 57m",
-    apps:[{name:"WhatsApp",time:"25h 14m"},{name:"Instagram",time:"24h 16m"},{name:"Forest",time:"3h 23m"}],
-    note:"" },
-  { start:"2026-05-18", end:"2026-05-24", dailyAvg:"7h 24m", total:"51h 52m",
-    apps:[{name:"WhatsApp",time:"21h 9m"},{name:"Instagram",time:"15h 44m"},{name:"YouTube",time:"2h 52m"}],
-    note:"Forest: 8h 58m this week" },
-  { start:"2026-05-25", end:"2026-05-31", dailyAvg:"7h 35m", total:"53h 7m",
-    apps:[{name:"Instagram",time:"22h 41m"},{name:"WhatsApp",time:"12h 30m"},{name:"Forest",time:"11h 29m"}],
-    note:"Eid — 3 days of doom scrolling" },
-  { start:"2026-06-01", end:"2026-06-07", dailyAvg:"5h 46m", total:"40h 26m",
-    apps:[{name:"Instagram",time:"10h 26m"},{name:"WhatsApp",time:"9h 39m"},{name:"YouTube",time:"2h 52m"}],
-    note:"Stay Focused (hide Reels) started working" },
-  { start:"2026-06-08", end:"2026-06-14", dailyAvg:"3h 26m", total:"24h 4m",
-    apps:[{name:"Instagram",time:"9h 22m"},{name:"WhatsApp",time:"7h 3m"},{name:"Reddit",time:"1h 12m"}],
-    note:"Best week — finals in progress" },
-  { start:"2026-06-15", end:"2026-06-21", dailyAvg:"4h 42m", total:"32h 54m",
-    apps:[{name:"Instagram",time:"19h 57m"},{name:"WhatsApp",time:"6h 49m"},{name:"Chrome",time:"53m"}],
-    note:"Post-exam relapse — Stay Focused stopped working" },
-];
+/* ── STORAGE ── */
+function saveLocal(){ localStorage.setItem('st_weeks', JSON.stringify(weeks)); }
+function loadLocal(){
+  const s = localStorage.getItem('st_weeks');
+  if(s){ try{ weeks = JSON.parse(s); }catch(e){ weeks=[]; } }
+  else{ weeks=[]; }
+}
 
+/* ── TIME HELPERS ── */
 function parseHM(str){
-  if(!str) return 0;
-  const h = /(\d+)\s*h/i.exec(str);
-  const m = /(\d+)\s*m/i.exec(str);
-  return (h?parseInt(h[1]):0)*60 + (m?parseInt(m[1]):0);
+  if(!str) return null;
+  const h=/(\d+)\s*h/i.exec(str), m=/(\d+)\s*m/i.exec(str);
+  if(!h && !m) return null;
+  return (h?parseInt(h[1]):0)*60+(m?parseInt(m[1]):0);
 }
 function fmtMin(min){
-  const h = Math.floor(min/60), m = Math.round(min%60);
+  if(min===null||min===undefined) return '—';
+  const h=Math.floor(min/60), m=Math.round(min%60);
   return `${h}h ${m}m`;
 }
-function findApp(week, nameLower){
-  const a = week.apps.find(x=>x.name.toLowerCase()===nameLower);
+function findApp(week, key){
+  const a = week.apps.find(x=>x.name.toLowerCase().includes(key));
   return a ? parseHM(a.time) : null;
 }
 function weekLabel(w){
-  const opts = {month:'short', day:'numeric'};
-  const s = new Date(w.start+"T00:00:00").toLocaleDateString('en-US',opts);
-  const e = new Date(w.end+"T00:00:00").toLocaleDateString('en-US',opts);
-  return `${s}–${e}`;
+  const fmt = d => new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return `${fmt(w.start)} – ${fmt(w.end)}`;
 }
 
-async function connectFile(){ /* unused now */ }
-
-function loadFromLocalStorage(){
-  const saved = localStorage.getItem('screenTimeWeeks');
-  if(saved){
-    try{ weeks = JSON.parse(saved); }catch(e){ weeks = SEED_DATA.slice(); }
-  } else {
-    weeks = SEED_DATA.slice();
-  }
-  renderAll();
-}
-
-function saveToLocalStorage(){
-  localStorage.setItem('screenTimeWeeks', JSON.stringify(weeks));
-}
-
-function downloadDataJson(){
-  const blob = new Blob([JSON.stringify({weeks}, null, 2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'data.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-document.getElementById('loadBtn').addEventListener('click', ()=>{
-  document.getElementById('fileInput').click();
-});
-document.getElementById('downloadBtn').addEventListener('click', downloadDataJson);
-document.getElementById('fileInput').addEventListener('change', async (e)=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const text = await file.text();
-  try{
-    const parsed = JSON.parse(text);
-    weeks = parsed.weeks || SEED_DATA.slice();
-    saveToLocalStorage();
-    renderAll();
-    setConnected(true);
-  }catch(err){
-    alert("Couldn't read that file — make sure it's a data.json exported from this dashboard.");
-  }
-});
-
-function setConnected(isConnected){
-  const status = document.getElementById('storageStatus');
-  const banner = document.getElementById('connectBanner');
-  if(isConnected){
-    status.textContent = 'data.json connected';
-    status.className = 'status connected util';
-    banner.style.display = 'none';
-  } else {
-    status.textContent = 'data.json not connected';
-    status.className = 'status disconnected util';
-    banner.style.display = 'block';
-  }
-}
-
+/* ── RENDER ── */
 function renderAll(){
-  if(weeks.length === 0){
-    document.getElementById('statGrid').innerHTML = '<div class="empty">No weeks logged yet.</div>';
-    return;
-  }
-  weeks.sort((a,b)=> new Date(a.start) - new Date(b.start));
+  weeks.sort((a,b)=>new Date(a.start)-new Date(b.start));
   renderStats();
-  renderCharts();
+  renderChart();
   renderTable();
 }
 
 function renderStats(){
-  const first = weeks[0];
-  const last = weeks[weeks.length-1];
-  const grid = document.getElementById('statGrid');
-  const firstAvg = parseHM(first.dailyAvg);
-  const lastAvg = parseHM(last.dailyAvg);
-  const avgDelta = lastAvg - firstAvg;
-  const firstIG = findApp(first,'instagram');
-  const lastIG = findApp(last,'instagram');
+  const n = weeks.length;
+  document.getElementById('s-weeks').textContent = n || '—';
+  if(n===0){
+    document.getElementById('s-range').textContent = 'no data yet';
+    ['s-avg','s-ig','s-forest'].forEach(id=>{ document.getElementById(id).textContent='—'; });
+    ['s-avg-delta','s-ig-delta','s-forest-delta'].forEach(id=>{ document.getElementById(id).textContent=''; });
+    return;
+  }
+  document.getElementById('s-range').textContent = `${weekLabel(weeks[0])} → ${weekLabel(weeks[n-1])}`;
 
-  let igStatHTML = '';
-  if(firstIG !== null && lastIG !== null){
-    const igDelta = lastIG - firstIG;
-    igStatHTML = `
-      <div class="stat">
-        <div class="label">Instagram, latest week</div>
-        <div class="value">${fmtMin(lastIG)}</div>
-        <div class="delta ${igDelta<=0?'down':'up'}">${igDelta<=0?'↓':'↑'} ${fmtMin(Math.abs(igDelta))} vs week 1</div>
-      </div>`;
-  } else {
-    igStatHTML = `<div class="stat"><div class="label">Instagram, latest week</div><div class="value">—</div><div class="delta">not tracked this week</div></div>`;
+  const last = weeks[n-1];
+  const first = weeks[0];
+
+  // avg
+  const lastAvg = parseHM(last.dailyAvg);
+  const firstAvg = parseHM(first.dailyAvg);
+  document.getElementById('s-avg').textContent = last.dailyAvg || '—';
+  if(lastAvg!==null && firstAvg!==null && n>1){
+    const d = lastAvg - firstAvg;
+    const el = document.getElementById('s-avg-delta');
+    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
+    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
   }
 
-  grid.innerHTML = `
-    <div class="stat">
-      <div class="label">Daily avg, latest week</div>
-      <div class="value">${last.dailyAvg}</div>
-      <div class="delta ${avgDelta<=0?'down':'up'}">${avgDelta<=0?'↓':'↑'} ${fmtMin(Math.abs(avgDelta))} vs week 1</div>
-    </div>
-    <div class="stat">
-      <div class="label">Total, latest week</div>
-      <div class="value">${last.total}</div>
-      <div class="delta">${weekLabel(last)}</div>
-    </div>
-    ${igStatHTML}
-    <div class="stat">
-      <div class="label">Weeks logged</div>
-      <div class="value">${weeks.length}</div>
-      <div class="delta">${weekLabel(first)} → ${weekLabel(last)}</div>
-    </div>
-  `;
+  // ig
+  const lastIG = findApp(last,'instagram');
+  const firstIG = findApp(first,'instagram');
+  document.getElementById('s-ig').textContent = lastIG!==null ? fmtMin(lastIG) : '—';
+  if(lastIG!==null && firstIG!==null && n>1){
+    const d = lastIG - firstIG;
+    const el = document.getElementById('s-ig-delta');
+    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
+    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
+  }
+
+  // forest
+  const lastF = findApp(last,'forest');
+  const firstF = findApp(first,'forest');
+  document.getElementById('s-forest').textContent = lastF!==null ? fmtMin(lastF) : '—';
+  if(lastF!==null && firstF!==null && n>1){
+    const d = lastF - firstF;
+    const el = document.getElementById('s-forest-delta');
+    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
+    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
+  }
 }
 
-let avgChartInst, igChartInst, forestChartInst;
-function renderCharts(){
+function getChartData(){
   const labels = weeks.map(weekLabel);
-  const avgData = weeks.map(w=>+(parseHM(w.dailyAvg)/60).toFixed(2));
-  const igData = weeks.map(w=>{ const v = findApp(w,'instagram'); return v===null? null : +(v/60).toFixed(2); });
-  const forestData = weeks.map(w=>{ const v = findApp(w,'forest'); return v===null? null : +(v/60).toFixed(2); });
+  if(activeTab==='avg'){
+    return {
+      labels,
+      data: weeks.map(w=>{ const v=parseHM(w.dailyAvg); return v!==null?+(v/60).toFixed(2):null; }),
+      color:'#a9462f', label:'Daily avg (hrs)'
+    };
+  }
+  if(activeTab==='ig'){
+    return {
+      labels,
+      data: weeks.map(w=>{ const v=findApp(w,'instagram'); return v!==null?+(v/60).toFixed(2):null; }),
+      color:'#a9462f', label:'Instagram (hrs)'
+    };
+  }
+  return {
+    labels,
+    data: weeks.map(w=>{ const v=findApp(w,'forest'); return v!==null?+(v/60).toFixed(2):null; }),
+    color:'#3f6b52', label:'Forest focus (hrs)'
+  };
+}
 
-  const baseOpts = (color)=>({
+function renderChart(){
+  const empty = document.getElementById('emptyChart');
+  const canvas = document.getElementById('mainChart');
+  if(weeks.length===0){
+    empty.style.display='flex'; canvas.style.display='none';
+    if(chartInst){ chartInst.destroy(); chartInst=null; }
+    return;
+  }
+  empty.style.display='none'; canvas.style.display='block';
+  const {labels,data,color,label} = getChartData();
+  if(chartInst) chartInst.destroy();
+  chartInst = new Chart(canvas, {
     type:'line',
-    data:{ labels, datasets:[{ data:[], borderColor:color, backgroundColor:color+'22',
-      borderWidth:2, fill:true, tension:0.3, pointRadius:4, pointBackgroundColor:color, spanGaps:true }]},
+    data:{ labels, datasets:[{
+      label, data,
+      borderColor:color, backgroundColor:color+'22',
+      borderWidth:2, fill:true, tension:0.3,
+      pointRadius:4, pointBackgroundColor:color, spanGaps:true
+    }]},
     options:{
-      responsive:true, maintainAspectRatio:true,
+      responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{display:false} },
       scales:{
         y:{ beginAtZero:true, title:{display:true,text:'hours'}, grid:{color:'#eee'} },
-        x:{ grid:{display:false} }
+        x:{ grid:{display:false}, ticks:{font:{size:10}} }
       }
     }
   });
-
-  if(avgChartInst) avgChartInst.destroy();
-  if(igChartInst) igChartInst.destroy();
-  if(forestChartInst) forestChartInst.destroy();
-
-  const c1 = baseOpts('#a9462f'); c1.data.datasets[0].data = avgData;
-  avgChartInst = new Chart(document.getElementById('avgChart'), c1);
-
-  const c2 = baseOpts('#a9462f'); c2.data.datasets[0].data = igData;
-  igChartInst = new Chart(document.getElementById('igChart'), c2);
-
-  const c3 = baseOpts('#3f6b52'); c3.data.datasets[0].data = forestData;
-  forestChartInst = new Chart(document.getElementById('forestChart'), c3);
 }
 
 function renderTable(){
-  const wrap = document.getElementById('tableWrap');
-  let rows = weeks.slice().reverse().map(w=>{
-    const appStr = w.apps.map(a=>`${a.name} ${a.time}`).join(' · ');
+  const tbody = document.getElementById('tableBody');
+  if(weeks.length===0){
+    tbody.innerHTML='<tr><td colspan="5" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = weeks.slice().reverse().map(w=>{
+    const chips = w.apps.map(a=>`<span class="app-chip">${a.name} ${a.time}</span>`).join('');
     return `<tr>
-      <td>${weekLabel(w)}</td>
-      <td>${w.dailyAvg}</td>
-      <td>${w.total}</td>
-      <td>${appStr}</td>
-      <td class="note-tag">${w.note||''}</td>
+      <td style="white-space:nowrap;">${weekLabel(w)}</td>
+      <td style="white-space:nowrap;">${w.dailyAvg}</td>
+      <td style="white-space:nowrap;">${w.total}</td>
+      <td>${chips}</td>
+      <td class="note-cell">${w.note||''}</td>
     </tr>`;
   }).join('');
-  wrap.innerHTML = `<table>
-    <thead><tr><th>Week</th><th>Daily avg</th><th>Total</th><th>Apps</th><th>Note</th></tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
 }
 
-function addAppRow(name='', time=''){
+/* ── TABS ── */
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    renderChart();
+  });
+});
+
+/* ── MODAL ── */
+function openModal(){
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('appRows').innerHTML='';
+  addAppRow(); addAppRow(); addAppRow();
+  document.getElementById('weekForm').reset();
+}
+function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+document.getElementById('openModalBtn').addEventListener('click', openModal);
+document.getElementById('closeModal').addEventListener('click', closeModal);
+document.getElementById('cancelModal').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+
+function addAppRow(name='',time=''){
   const container = document.getElementById('appRows');
   const row = document.createElement('div');
-  row.className = 'app-row';
-  row.innerHTML = `
+  row.className='app-row';
+  row.innerHTML=`
     <input type="text" placeholder="App name" class="appName" value="${name}">
     <input type="text" placeholder="e.g. 9h 22m" class="appTime" value="${time}">
-    <button type="button" class="removeApp">×</button>
-  `;
-  row.querySelector('.removeApp').addEventListener('click', ()=> row.remove());
+    <button type="button" class="rmApp">×</button>`;
+  row.querySelector('.rmApp').addEventListener('click',()=>row.remove());
   container.appendChild(row);
 }
+document.getElementById('addAppBtn').addEventListener('click',()=>addAppRow());
 
-document.getElementById('addAppBtn').addEventListener('click', ()=> addAppRow());
-
-document.getElementById('weekForm').addEventListener('submit', async (e)=>{
-  e.preventDefault();
+document.getElementById('saveWeekBtn').addEventListener('click',()=>{
   const start = document.getElementById('weekStart').value;
   const end = document.getElementById('weekEnd').value;
   const dailyAvg = document.getElementById('dailyAvg').value.trim();
   const total = document.getElementById('totalTime').value.trim();
   const note = document.getElementById('weekNote').value.trim();
-
-  const apps = [...document.querySelectorAll('.app-row')].map(row=>({
-    name: row.querySelector('.appName').value.trim(),
-    time: row.querySelector('.appTime').value.trim()
-  })).filter(a=>a.name && a.time);
-
-  if(!start || !end || !dailyAvg || !total){ return; }
-
-  weeks.push({start, end, dailyAvg, total, apps, note});
+  if(!start||!end||!dailyAvg||!total){ alert('Please fill week dates, daily avg, and total.'); return; }
+  const apps = [...document.querySelectorAll('.app-row')].map(r=>({
+    name:r.querySelector('.appName').value.trim(),
+    time:r.querySelector('.appTime').value.trim()
+  })).filter(a=>a.name&&a.time);
+  weeks.push({start,end,dailyAvg,total,apps,note});
+  saveLocal();
+  document.getElementById('lastSaved').textContent = 'saved ' + new Date().toLocaleTimeString();
+  closeModal();
   renderAll();
-  saveToLocalStorage();
-
-  e.target.reset();
-  document.getElementById('appRows').innerHTML = '';
-  addAppRow(); addAppRow(); addAppRow();
 });
 
-document.getElementById('exportBtn').addEventListener('click', downloadDataJson);
+/* ── DATA FILE LOAD/DOWNLOAD ── */
+document.getElementById('loadBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', async e=>{
+  const file = e.target.files[0]; if(!file) return;
+  const text = await file.text();
+  try{
+    const parsed = JSON.parse(text);
+    weeks = parsed.weeks || [];
+    saveLocal();
+    renderAll();
+    document.getElementById('storageDot').textContent = '● data.json loaded';
+    document.getElementById('storageDot').className = 'storage-dot ok';
+  }catch(err){ alert("Couldn't read that file — make sure it's a valid data.json from this dashboard."); }
+  e.target.value='';
+});
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+  const blob = new Blob([JSON.stringify({weeks},null,2)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='data.json'; a.click();
+  URL.revokeObjectURL(url);
+});
 
-// init
-loadFromLocalStorage();
-addAppRow(); addAppRow(); addAppRow();
+/* ── INIT ── */
+loadLocal();
+renderAll();
 </script>
-
 </body>
 </html>

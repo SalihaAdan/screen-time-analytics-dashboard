@@ -1,15 +1,21 @@
-# Screen Time Dashboard — Setup
+# Screen Time Dashboard
 
-1. Keep `dashboard.html` in this folder. Double-click it to open in Chrome.
-2. Your data auto-saves in the browser as you use it — no setup needed.
-   Closing and reopening the dashboard will keep your data, as long as
-   you don't clear Chrome's site data/cache for this file.
-3. Since you clear cache often, get in the habit of clicking
-   **"Download data.json"** after adding a new week. This saves a real
-   backup file to your Downloads folder — move it into this folder
-   to keep things tidy. This file is **NOT** affected by clearing cache.
-4. If your in-browser data ever gets wiped (e.g. after a cache clear),
-   click **"Load data.json"** and select your last downloaded backup file
-   to restore everything.
-5. Your 6 weeks so far (May 11 – Jun 21) are pre-loaded by default
-   the first time you open it.
+## Setup
+1. Download `dashboard.html` and open it in Chrome (double-click).
+2. Your data auto-saves in the browser — no setup needed.
+
+## Adding weeks
+Click **+ Add Week** in the top right, fill the form, hit Save.
+
+## Keeping your data safe
+Since you clear cache often:
+- Click **Download data.json** after adding each week.
+- Keep that file in this folder.
+- If cache ever gets wiped, click **Load data.json** and pick your backup — everything restores instantly.
+
+## Charts
+Three tabs above the chart — Daily Average, Instagram, Forest.
+
+## Notes
+- Works in Chrome only (file system features don't work in Safari/Firefox).
+- Data lives in browser storage between sessions, not in a server or cloud.
