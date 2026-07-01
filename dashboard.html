@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Screen Time — Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#1b1d22;
+    --paper:#f6f4ef;
+    --line:#d9d4c7;
+    --accent:#3f6b52;     /* deep moss green — calm, growth */
+    --accent-soft:#cddccf;
+    --warn:#a9462f;       /* rust — for the apps working against her */
+    --warn-soft:#ecd6cd;
+    --muted:#7a766c;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family: 'Iowan Old Style','Georgia',serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .util{font-family:'Courier New',monospace; letter-spacing:0.04em;}
+  header{
+    padding:48px 40px 28px;
+    border-bottom:1px solid var(--line);
+  }
+  header h1{
+    margin:0 0 6px;
+    font-size:34px;
+    font-weight:400;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    margin:0;
+    color:var(--muted);
+    font-size:14px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 40px 80px; }
+  .toprow{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    flex-wrap:wrap; gap:16px;
+  }
+  .status{
+    font-size:13px; color:var(--muted); text-align:right;
+  }
+  .status.connected{ color:var(--accent); }
+  .status.connected::before{ content:"● "; }
+  .status.disconnected::before{ content:"○ "; }
+
+  section{ margin-top:48px; }
+  .section-label{
+    font-family:'Courier New',monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:0.12em;
+    color:var(--muted);
+    margin-bottom:14px;
+  }
+
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+  }
+  .stat{
+    background:var(--card);
+    padding:22px 20px;
+  }
+  .stat .label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+  .stat .value{ font-size:28px; margin-top:6px; }
+  .stat .delta{ font-size:13px; margin-top:4px; }
+  .delta.down{ color:var(--accent); }
+  .delta.up{ color:var(--warn); }
+
+  .chart-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:24px;
+    margin-bottom:20px;
+  }
+  .chart-card h3{ margin:0 0 16px; font-weight:400; font-size:17px; }
+  canvas{ max-height:280px; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); }
+  th,td{ text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); font-size:14px; }
+  th{ font-family:'Courier New',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); background:#faf9f5; }
+  tr:last-child td{ border-bottom:none; }
+  .note-tag{ font-size:12px; color:var(--warn); }
+
+  form{
+    background:var(--card);
+    border:1px solid var(--line);
+    padding:24px;
+  }
+  .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+  .form-row.full{ grid-template-columns:1fr; }
+  label{ display:block; font-size:12px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:6px; }
+  input[type=text], input[type=number], input[type=date]{
+    width:100%; padding:10px 12px; border:1px solid var(--line); background:var(--paper);
+    font-family:inherit; font-size:14px; color:var(--ink);
+  }
+  input:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  #appRows{ margin-bottom:14px; }
+  .app-row{ display:grid; grid-template-columns:2fr 1fr auto; gap:10px; margin-bottom:8px; align-items:center; }
+  .app-row button{
+    background:none; border:1px solid var(--line); color:var(--warn);
+    width:34px; height:38px; cursor:pointer; font-size:16px;
+  }
+  .btn-row{ display:flex; gap:10px; margin-top:18px; flex-wrap:wrap; }
+  button.primary, button.secondary{
+    font-family:inherit; font-size:14px; padding:11px 20px; cursor:pointer;
+    border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+  }
+  button.secondary{ background:var(--card); color:var(--ink); }
+  button.add-app{
+    background:none; border:1px dashed var(--line); color:var(--muted);
+    padding:9px 14px; font-size:13px; cursor:pointer; width:100%;
+  }
+  button:hover{ opacity:0.85; }
+
+  .connect-banner{
+    background:var(--warn-soft); border:1px solid var(--warn);
+    padding:16px 20px; font-size:14px; margin-bottom:20px;
+  }
+  .connect-banner button{
+    font-family:inherit; background:var(--warn); color:#fff; border:none;
+    padding:8px 16px; cursor:pointer; margin-left:10px; font-size:13px;
+  }
+  .empty{ color:var(--muted); font-style:italic; padding:30px; text-align:center; }
+  footer{ text-align:center; color:var(--muted); font-size:12px; padding:30px 0 10px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0;">
+    <div class="toprow">
+      <div>
+        <h1>Screen Time — Tracker</h1>
+        <p>your weekly record, kept on your machine</p>
+      </div>
+      <div class="status disconnected util" id="storageStatus">data.json not connected</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="connect-banner" id="connectBanner">
+    Your data is currently saved in this browser only. Click <strong>Load data.json</strong> to bring in your saved file,
+    or <strong>Download data.json</strong> any time to save your current data to this folder.
+    <button id="loadBtn">Load data.json</button>
+    <button id="downloadBtn">Download data.json</button>
+  </div>
+  <input type="file" id="fileInput" accept=".json" style="display:none;">
+
+  <section>
+    <div class="section-label">Latest week vs. first week tracked</div>
+    <div class="stat-grid" id="statGrid"></div>
+  </section>
+
+  <section>
+    <div class="section-label">Daily average screen time</div>
+    <div class="chart-card"><canvas id="avgChart"></canvas></div>
+  </section>
+
+  <section>
+    <div class="section-label">Instagram</div>
+    <div class="chart-card"><canvas id="igChart"></canvas></div>
+  </section>
+
+  <section>
+    <div class="section-label">Forest — focused time</div>
+    <div class="chart-card"><canvas id="forestChart"></canvas></div>
+  </section>
+
+  <section>
+    <div class="section-label">All weeks logged</div>
+    <div id="tableWrap"></div>
+  </section>
+
+  <section>
+    <div class="section-label">Log a new week</div>
+    <form id="weekForm">
+      <div class="form-row">
+        <div>
+          <label>Week start</label>
+          <input type="date" id="weekStart" required>
+        </div>
+        <div>
+          <label>Week end</label>
+          <input type="date" id="weekEnd" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Daily average (e.g. 5h 46m)</label>
+          <input type="text" id="dailyAvg" placeholder="5h 46m" required>
+        </div>
+        <div>
+          <label>Total screen time (e.g. 40h 26m)</label>
+          <input type="text" id="totalTime" placeholder="40h 26m" required>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div>
+          <label>Note (optional — e.g. "Eid week", "deleted Instagram")</label>
+          <input type="text" id="weekNote" placeholder="optional context">
+        </div>
+      </div>
+
+      <label style="margin-top:4px;">App breakdown</label>
+      <div id="appRows"></div>
+      <button type="button" class="add-app" id="addAppBtn">+ add app</button>
+
+      <div class="btn-row">
+        <button type="submit" class="primary">Save week</button>
+        <button type="button" class="secondary" id="exportBtn">Export backup (.json)</button>
+      </div>
+    </form>
+  </section>
+
+  <footer>kept locally · no account, no cloud, no tracking but your own</footer>
+</div>
+
+<script>
+let fileHandle = null;
+let weeks = [];
+
+const SEED_DATA = [
+  { start:"2026-05-11", end:"2026-05-17", dailyAvg:"8h 33m", total:"59h 57m",
+    apps:[{name:"WhatsApp",time:"25h 14m"},{name:"Instagram",time:"24h 16m"},{name:"Forest",time:"3h 23m"}],
+    note:"" },
+  { start:"2026-05-18", end:"2026-05-24", dailyAvg:"7h 24m", total:"51h 52m",
+    apps:[{name:"WhatsApp",time:"21h 9m"},{name:"Instagram",time:"15h 44m"},{name:"YouTube",time:"2h 52m"}],
+    note:"Forest: 8h 58m this week" },
+  { start:"2026-05-25", end:"2026-05-31", dailyAvg:"7h 35m", total:"53h 7m",
+    apps:[{name:"Instagram",time:"22h 41m"},{name:"WhatsApp",time:"12h 30m"},{name:"Forest",time:"11h 29m"}],
+    note:"Eid — 3 days of doom scrolling" },
+  { start:"2026-06-01", end:"2026-06-07", dailyAvg:"5h 46m", total:"40h 26m",
+    apps:[{name:"Instagram",time:"10h 26m"},{name:"WhatsApp",time:"9h 39m"},{name:"YouTube",time:"2h 52m"}],
+    note:"Stay Focused (hide Reels) started working" },
+  { start:"2026-06-08", end:"2026-06-14", dailyAvg:"3h 26m", total:"24h 4m",
+    apps:[{name:"Instagram",time:"9h 22m"},{name:"WhatsApp",time:"7h 3m"},{name:"Reddit",time:"1h 12m"}],
+    note:"Best week — finals in progress" },
+  { start:"2026-06-15", end:"2026-06-21", dailyAvg:"4h 42m", total:"32h 54m",
+    apps:[{name:"Instagram",time:"19h 57m"},{name:"WhatsApp",time:"6h 49m"},{name:"Chrome",time:"53m"}],
+    note:"Post-exam relapse — Stay Focused stopped working" },
+];
+
+function parseHM(str){
+  if(!str) return 0;
+  const h = /(\d+)\s*h/i.exec(str);
+  const m = /(\d+)\s*m/i.exec(str);
+  return (h?parseInt(h[1]):0)*60 + (m?parseInt(m[1]):0);
+}
+function fmtMin(min){
+  const h = Math.floor(min/60), m = Math.round(min%60);
+  return `${h}h ${m}m`;
+}
+function findApp(week, nameLower){
+  const a = week.apps.find(x=>x.name.toLowerCase()===nameLower);
+  return a ? parseHM(a.time) : null;
+}
+function weekLabel(w){
+  const opts = {month:'short', day:'numeric'};
+  const s = new Date(w.start+"T00:00:00").toLocaleDateString('en-US',opts);
+  const e = new Date(w.end+"T00:00:00").toLocaleDateString('en-US',opts);
+  return `${s}–${e}`;
+}
+
+async function connectFile(){ /* unused now */ }
+
+function loadFromLocalStorage(){
+  const saved = localStorage.getItem('screenTimeWeeks');
+  if(saved){
+    try{ weeks = JSON.parse(saved); }catch(e){ weeks = SEED_DATA.slice(); }
+  } else {
+    weeks = SEED_DATA.slice();
+  }
+  renderAll();
+}
+
+function saveToLocalStorage(){
+  localStorage.setItem('screenTimeWeeks', JSON.stringify(weeks));
+}
+
+function downloadDataJson(){
+  const blob = new Blob([JSON.stringify({weeks}, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'data.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('loadBtn').addEventListener('click', ()=>{
+  document.getElementById('fileInput').click();
+});
+document.getElementById('downloadBtn').addEventListener('click', downloadDataJson);
+document.getElementById('fileInput').addEventListener('change', async (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    const parsed = JSON.parse(text);
+    weeks = parsed.weeks || SEED_DATA.slice();
+    saveToLocalStorage();
+    renderAll();
+    setConnected(true);
+  }catch(err){
+    alert("Couldn't read that file — make sure it's a data.json exported from this dashboard.");
+  }
+});
+
+function setConnected(isConnected){
+  const status = document.getElementById('storageStatus');
+  const banner = document.getElementById('connectBanner');
+  if(isConnected){
+    status.textContent = 'data.json connected';
+    status.className = 'status connected util';
+    banner.style.display = 'none';
+  } else {
+    status.textContent = 'data.json not connected';
+    status.className = 'status disconnected util';
+    banner.style.display = 'block';
+  }
+}
+
+function renderAll(){
+  if(weeks.length === 0){
+    document.getElementById('statGrid').innerHTML = '<div class="empty">No weeks logged yet.</div>';
+    return;
+  }
+  weeks.sort((a,b)=> new Date(a.start) - new Date(b.start));
+  renderStats();
+  renderCharts();
+  renderTable();
+}
+
+function renderStats(){
+  const first = weeks[0];
+  const last = weeks[weeks.length-1];
+  const grid = document.getElementById('statGrid');
+  const firstAvg = parseHM(first.dailyAvg);
+  const lastAvg = parseHM(last.dailyAvg);
+  const avgDelta = lastAvg - firstAvg;
+  const firstIG = findApp(first,'instagram');
+  const lastIG = findApp(last,'instagram');
+
+  let igStatHTML = '';
+  if(firstIG !== null && lastIG !== null){
+    const igDelta = lastIG - firstIG;
+    igStatHTML = `
+      <div class="stat">
+        <div class="label">Instagram, latest week</div>
+        <div class="value">${fmtMin(lastIG)}</div>
+        <div class="delta ${igDelta<=0?'down':'up'}">${igDelta<=0?'↓':'↑'} ${fmtMin(Math.abs(igDelta))} vs week 1</div>
+      </div>`;
+  } else {
+    igStatHTML = `<div class="stat"><div class="label">Instagram, latest week</div><div class="value">—</div><div class="delta">not tracked this week</div></div>`;
+  }
+
+  grid.innerHTML = `
+    <div class="stat">
+      <div class="label">Daily avg, latest week</div>
+      <div class="value">${last.dailyAvg}</div>
+      <div class="delta ${avgDelta<=0?'down':'up'}">${avgDelta<=0?'↓':'↑'} ${fmtMin(Math.abs(avgDelta))} vs week 1</div>
+    </div>
+    <div class="stat">
+      <div class="label">Total, latest week</div>
+      <div class="value">${last.total}</div>
+      <div class="delta">${weekLabel(last)}</div>
+    </div>
+    ${igStatHTML}
+    <div class="stat">
+      <div class="label">Weeks logged</div>
+      <div class="value">${weeks.length}</div>
+      <div class="delta">${weekLabel(first)} → ${weekLabel(last)}</div>
+    </div>
+  `;
+}
+
+let avgChartInst, igChartInst, forestChartInst;
+function renderCharts(){
+  const labels = weeks.map(weekLabel);
+  const avgData = weeks.map(w=>+(parseHM(w.dailyAvg)/60).toFixed(2));
+  const igData = weeks.map(w=>{ const v = findApp(w,'instagram'); return v===null? null : +(v/60).toFixed(2); });
+  const forestData = weeks.map(w=>{ const v = findApp(w,'forest'); return v===null? null : +(v/60).toFixed(2); });
+
+  const baseOpts = (color)=>({
+    type:'line',
+    data:{ labels, datasets:[{ data:[], borderColor:color, backgroundColor:color+'22',
+      borderWidth:2, fill:true, tension:0.3, pointRadius:4, pointBackgroundColor:color, spanGaps:true }]},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{display:false} },
+      scales:{
+        y:{ beginAtZero:true, title:{display:true,text:'hours'}, grid:{color:'#eee'} },
+        x:{ grid:{display:false} }
+      }
+    }
+  });
+
+  if(avgChartInst) avgChartInst.destroy();
+  if(igChartInst) igChartInst.destroy();
+  if(forestChartInst) forestChartInst.destroy();
+
+  const c1 = baseOpts('#a9462f'); c1.data.datasets[0].data = avgData;
+  avgChartInst = new Chart(document.getElementById('avgChart'), c1);
+
+  const c2 = baseOpts('#a9462f'); c2.data.datasets[0].data = igData;
+  igChartInst = new Chart(document.getElementById('igChart'), c2);
+
+  const c3 = baseOpts('#3f6b52'); c3.data.datasets[0].data = forestData;
+  forestChartInst = new Chart(document.getElementById('forestChart'), c3);
+}
+
+function renderTable(){
+  const wrap = document.getElementById('tableWrap');
+  let rows = weeks.slice().reverse().map(w=>{
+    const appStr = w.apps.map(a=>`${a.name} ${a.time}`).join(' · ');
+    return `<tr>
+      <td>${weekLabel(w)}</td>
+      <td>${w.dailyAvg}</td>
+      <td>${w.total}</td>
+      <td>${appStr}</td>
+      <td class="note-tag">${w.note||''}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table>
+    <thead><tr><th>Week</th><th>Daily avg</th><th>Total</th><th>Apps</th><th>Note</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function addAppRow(name='', time=''){
+  const container = document.getElementById('appRows');
+  const row = document.createElement('div');
+  row.className = 'app-row';
+  row.innerHTML = `
+    <input type="text" placeholder="App name" class="appName" value="${name}">
+    <input type="text" placeholder="e.g. 9h 22m" class="appTime" value="${time}">
+    <button type="button" class="removeApp">×</button>
+  `;
+  row.querySelector('.removeApp').addEventListener('click', ()=> row.remove());
+  container.appendChild(row);
+}
+
+document.getElementById('addAppBtn').addEventListener('click', ()=> addAppRow());
+
+document.getElementById('weekForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const start = document.getElementById('weekStart').value;
+  const end = document.getElementById('weekEnd').value;
+  const dailyAvg = document.getElementById('dailyAvg').value.trim();
+  const total = document.getElementById('totalTime').value.trim();
+  const note = document.getElementById('weekNote').value.trim();
+
+  const apps = [...document.querySelectorAll('.app-row')].map(row=>({
+    name: row.querySelector('.appName').value.trim(),
+    time: row.querySelector('.appTime').value.trim()
+  })).filter(a=>a.name && a.time);
+
+  if(!start || !end || !dailyAvg || !total){ return; }
+
+  weeks.push({start, end, dailyAvg, total, apps, note});
+  renderAll();
+  saveToLocalStorage();
+
+  e.target.reset();
+  document.getElementById('appRows').innerHTML = '';
+  addAppRow(); addAppRow(); addAppRow();
+});
+
+document.getElementById('exportBtn').addEventListener('click', downloadDataJson);
+
+// init
+loadFromLocalStorage();
+addAppRow(); addAppRow(); addAppRow();
+</script>
+
+</body>
+</html>
