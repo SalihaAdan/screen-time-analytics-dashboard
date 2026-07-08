@@ -1,0 +1,130 @@
+{
+  "weeks": [
+    {
+      "start": "2026-05-11",
+      "end": "2026-05-17",
+      "dailyAvg": "8h 33m",
+      "total": "59h 57m",
+      "apps": [
+        {
+          "name": "WhatsApp",
+          "time": "25h 14m"
+        },
+        {
+          "name": "Instagram",
+          "time": "24h 16m"
+        },
+        {
+          "name": "Forest",
+          "time": "3h 23m"
+        }
+      ],
+      "note": ""
+    },
+    {
+      "start": "2026-05-18",
+      "end": "2026-05-24",
+      "dailyAvg": "7h 24m",
+      "total": "51h 52m",
+      "apps": [
+        {
+          "name": "WhatsApp",
+          "time": "21h 9m"
+        },
+        {
+          "name": "Instagram",
+          "time": "15h 44m"
+        },
+        {
+          "name": "YouTube",
+          "time": "2h 52m"
+        }
+      ],
+      "note": "Forest: 8h 58m this week"
+    },
+    {
+      "start": "2026-05-25",
+      "end": "2026-05-31",
+      "dailyAvg": "7h 35m",
+      "total": "53h 7m",
+      "apps": [
+        {
+          "name": "Instagram",
+          "time": "22h 41m"
+        },
+        {
+          "name": "WhatsApp",
+          "time": "12h 30m"
+        },
+        {
+          "name": "Forest",
+          "time": "11h 29m"
+        }
+      ],
+      "note": "Eid — 3 days of doom scrolling"
+    },
+    {
+      "start": "2026-06-01",
+      "end": "2026-06-07",
+      "dailyAvg": "5h 46m",
+      "total": "40h 26m",
+      "apps": [
+        {
+          "name": "Instagram",
+          "time": "10h 26m"
+        },
+        {
+          "name": "WhatsApp",
+          "time": "9h 39m"
+        },
+        {
+          "name": "YouTube",
+          "time": "2h 52m"
+        }
+      ],
+      "note": "Stay Focused (hide Reels) started working"
+    },
+    {
+      "start": "2026-06-08",
+      "end": "2026-06-14",
+      "dailyAvg": "3h 26m",
+      "total": "24h 4m",
+      "apps": [
+        {
+          "name": "Instagram",
+          "time": "9h 22m"
+        },
+        {
+          "name": "WhatsApp",
+          "time": "7h 3m"
+        },
+        {
+          "name": "Reddit",
+          "time": "1h 12m"
+        }
+      ],
+      "note": "Best week — finals in progress"
+    },
+    {
+      "start": "2026-06-15",
+      "end": "2026-06-21",
+      "dailyAvg": "4h 42m",
+      "total": "32h 54m",
+      "apps": [
+        {
+          "name": "Instagram",
+          "time": "19h 57m"
+        },
+        {
+          "name": "WhatsApp",
+          "time": "6h 49m"
+        },
+        {
+          "name": "Chrome",
+          "time": "53m"
+        }
+      ],
+      "note": "Post-exam relapse — Stay Focused stopped working"
+    }
+  ]
+}

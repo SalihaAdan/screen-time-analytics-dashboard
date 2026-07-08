@@ -13,7 +13,6 @@
 *{box-sizing:border-box; margin:0; padding:0;}
 html,body{height:100%; overflow:hidden; background:var(--paper); color:var(--ink); font-family:'Georgia',serif;}
 
-/* LAYOUT */
 .shell{
   height:100vh;
   display:grid;
@@ -24,10 +23,8 @@ html,body{height:100%; overflow:hidden; background:var(--paper); color:var(--ink
     "stats  stats"
     "chart  table"
     "footer footer";
-  gap:0;
 }
 
-/* HEADER */
 header{
   grid-area:header;
   padding:14px 28px 12px;
@@ -46,16 +43,12 @@ header p{font-size:11px; color:var(--muted); text-transform:uppercase; letter-sp
 .storage-dot{font-size:11px; color:var(--muted); font-family:monospace;}
 .storage-dot.ok{color:var(--accent);}
 
-/* STATS */
 .stats{
   grid-area:stats;
   display:grid; grid-template-columns:repeat(4,1fr);
   border-bottom:1px solid var(--line);
 }
-.stat{
-  padding:12px 20px;
-  border-right:1px solid var(--line);
-}
+.stat{padding:12px 20px; border-right:1px solid var(--line);}
 .stat:last-child{border-right:none;}
 .stat .lbl{font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted);}
 .stat .val{font-size:22px; margin-top:3px;}
@@ -63,16 +56,13 @@ header p{font-size:11px; color:var(--muted); text-transform:uppercase; letter-sp
 .delta-down{color:var(--accent);}
 .delta-up{color:var(--warn);}
 
-/* CHART PANEL */
 .chart-panel{
   grid-area:chart;
   border-right:1px solid var(--line);
   display:flex; flex-direction:column;
   overflow:hidden;
 }
-.tabs{
-  display:flex; border-bottom:1px solid var(--line);
-}
+.tabs{display:flex; border-bottom:1px solid var(--line);}
 .tab{
   flex:1; padding:9px 0; text-align:center; font-size:12px;
   text-transform:uppercase; letter-spacing:0.07em; cursor:pointer;
@@ -88,7 +78,6 @@ header p{font-size:11px; color:var(--muted); text-transform:uppercase; letter-sp
   justify-content:center; color:var(--muted); font-style:italic; font-size:14px;
 }
 
-/* TABLE PANEL */
 .table-panel{
   grid-area:table;
   display:flex; flex-direction:column;
@@ -115,7 +104,6 @@ tr:last-child td{border-bottom:none;}
 }
 .note-cell{color:var(--warn); font-size:11px; font-style:italic;}
 
-/* FOOTER */
 footer{
   grid-area:footer;
   padding:7px 28px;
@@ -124,7 +112,6 @@ footer{
 }
 footer span{font-size:11px; color:var(--muted);}
 
-/* MODAL */
 .modal-overlay{
   display:none; position:fixed; inset:0;
   background:rgba(0,0,0,0.35); z-index:100;
@@ -141,14 +128,12 @@ footer span{font-size:11px; color:var(--muted);}
   display:flex; justify-content:space-between; align-items:center;
 }
 .modal-head h2{font-size:16px; font-weight:400;}
-.modal-close{
-  background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);
-}
+.modal-close{background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);}
 .modal-body{padding:20px; overflow-y:auto; flex:1;}
 .form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
 .form-row.full{grid-template-columns:1fr;}
 label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:4px;}
-input[type=text],input[type=date],input[type=number]{
+input[type=text],input[type=date]{
   width:100%; padding:8px 10px; border:1px solid var(--line);
   background:var(--paper); font-family:inherit; font-size:13px; color:var(--ink);
 }
@@ -177,7 +162,6 @@ input[type=file]{display:none;}
 <body>
 <div class="shell">
 
-  <!-- HEADER -->
   <header>
     <div>
       <h1>Screen Time</h1>
@@ -191,20 +175,17 @@ input[type=file]{display:none;}
     </div>
   </header>
 
-  <!-- STATS -->
-  <div class="stats" id="statsBar">
+  <div class="stats">
     <div class="stat"><div class="lbl">Weeks logged</div><div class="val" id="s-weeks">—</div><div class="sub" id="s-range">no data yet</div></div>
     <div class="stat"><div class="lbl">Latest daily avg</div><div class="val" id="s-avg">—</div><div class="sub" id="s-avg-delta"></div></div>
     <div class="stat"><div class="lbl">Latest Instagram</div><div class="val" id="s-ig">—</div><div class="sub" id="s-ig-delta"></div></div>
-    <div class="stat"><div class="lbl">Latest Forest</div><div class="val" id="s-forest">—</div><div class="sub" id="s-forest-delta"></div></div>
+    <div class="stat"><div class="lbl">Latest focus time</div><div class="val" id="s-focus">—</div><div class="sub" id="s-focus-delta"></div></div>
   </div>
 
-  <!-- CHART -->
   <div class="chart-panel">
     <div class="tabs">
       <button class="tab active" data-tab="avg">Daily Average</button>
-      <button class="tab" data-tab="ig">Instagram</button>
-      <button class="tab" data-tab="forest">Forest</button>
+      <button class="tab" data-tab="focus">Focus</button>
     </div>
     <div class="chart-wrap">
       <div class="empty-chart" id="emptyChart">No data yet — add your first week</div>
@@ -212,25 +193,22 @@ input[type=file]{display:none;}
     </div>
   </div>
 
-  <!-- TABLE -->
   <div class="table-panel">
     <div class="panel-label">All weeks</div>
     <div class="table-scroll">
-      <table id="weekTable">
-        <thead><tr><th>Week</th><th>Avg</th><th>Total</th><th>Apps</th><th>Note</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="5" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr></tbody>
+      <table>
+        <thead><tr><th>Week</th><th>Avg</th><th>Total</th><th>Focus</th><th>Apps</th><th>Note</th></tr></thead>
+        <tbody id="tableBody"><tr><td colspan="6" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr></tbody>
       </table>
     </div>
   </div>
 
-  <!-- FOOTER -->
   <footer>
     <span>kept locally · no cloud</span>
     <span id="lastSaved"></span>
   </footer>
 </div>
 
-<!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-head">
@@ -238,22 +216,21 @@ input[type=file]{display:none;}
       <button class="modal-close" id="closeModal">×</button>
     </div>
     <div class="modal-body">
-      <form id="weekForm">
-        <div class="form-row">
-          <div><label>Week start</label><input type="date" id="weekStart" required></div>
-          <div><label>Week end</label><input type="date" id="weekEnd" required></div>
-        </div>
-        <div class="form-row">
-          <div><label>Daily avg (e.g. 5h 46m)</label><input type="text" id="dailyAvg" placeholder="5h 46m" required></div>
-          <div><label>Total screen time</label><input type="text" id="totalTime" placeholder="40h 26m" required></div>
-        </div>
-        <div class="form-row full">
-          <div><label>Note (optional)</label><input type="text" id="weekNote" placeholder='e.g. "Eid week" or "deleted Instagram"'></div>
-        </div>
-        <label style="margin-top:4px;">App breakdown</label>
-        <div id="appRows" style="margin-top:8px;"></div>
-        <button type="button" class="btn-add-app" id="addAppBtn">+ add app</button>
-      </form>
+      <div class="form-row">
+        <div><label>Week start</label><input type="date" id="weekStart" required></div>
+        <div><label>Week end</label><input type="date" id="weekEnd" required></div>
+      </div>
+      <div class="form-row">
+        <div><label>Daily avg (e.g. 5h 46m)</label><input type="text" id="dailyAvg" placeholder="5h 46m" required></div>
+        <div><label>Total screen time</label><input type="text" id="totalTime" placeholder="40h 26m" required></div>
+      </div>
+      <div class="form-row">
+        <div><label>Focus time (from Forest app)</label><input type="text" id="focusTime" placeholder="e.g. 8h 30m"></div>
+        <div><label>Note (optional)</label><input type="text" id="weekNote" placeholder='e.g. "Eid week"'></div>
+      </div>
+      <label style="margin-top:4px;">App breakdown</label>
+      <div id="appRows" style="margin-top:8px;"></div>
+      <button type="button" class="btn-add-app" id="addAppBtn">+ add app</button>
     </div>
     <div class="modal-foot">
       <button class="btn-full btn-cancel" id="cancelModal">Cancel</button>
@@ -269,7 +246,6 @@ let weeks = [];
 let activeTab = 'avg';
 let chartInst = null;
 
-/* ── STORAGE ── */
 function saveLocal(){ localStorage.setItem('st_weeks', JSON.stringify(weeks)); }
 function loadLocal(){
   const s = localStorage.getItem('st_weeks');
@@ -277,7 +253,6 @@ function loadLocal(){
   else{ weeks=[]; }
 }
 
-/* ── TIME HELPERS ── */
 function parseHM(str){
   if(!str) return null;
   const h=/(\d+)\s*h/i.exec(str), m=/(\d+)\s*m/i.exec(str);
@@ -286,8 +261,7 @@ function parseHM(str){
 }
 function fmtMin(min){
   if(min===null||min===undefined) return '—';
-  const h=Math.floor(min/60), m=Math.round(min%60);
-  return `${h}h ${m}m`;
+  return `${Math.floor(min/60)}h ${Math.round(min%60)}m`;
 }
 function findApp(week, key){
   const a = week.apps.find(x=>x.name.toLowerCase().includes(key));
@@ -298,7 +272,6 @@ function weekLabel(w){
   return `${fmt(w.start)} – ${fmt(w.end)}`;
 }
 
-/* ── RENDER ── */
 function renderAll(){
   weeks.sort((a,b)=>new Date(a.start)-new Date(b.start));
   renderStats();
@@ -311,70 +284,27 @@ function renderStats(){
   document.getElementById('s-weeks').textContent = n || '—';
   if(n===0){
     document.getElementById('s-range').textContent = 'no data yet';
-    ['s-avg','s-ig','s-forest'].forEach(id=>{ document.getElementById(id).textContent='—'; });
-    ['s-avg-delta','s-ig-delta','s-forest-delta'].forEach(id=>{ document.getElementById(id).textContent=''; });
+    ['s-avg','s-ig','s-focus'].forEach(id=>document.getElementById(id).textContent='—');
+    ['s-avg-delta','s-ig-delta','s-focus-delta'].forEach(id=>document.getElementById(id).textContent='');
     return;
   }
   document.getElementById('s-range').textContent = `${weekLabel(weeks[0])} → ${weekLabel(weeks[n-1])}`;
 
-  const last = weeks[n-1];
-  const first = weeks[0];
+  const last = weeks[n-1], first = weeks[0];
 
-  // avg
-  const lastAvg = parseHM(last.dailyAvg);
-  const firstAvg = parseHM(first.dailyAvg);
-  document.getElementById('s-avg').textContent = last.dailyAvg || '—';
-  if(lastAvg!==null && firstAvg!==null && n>1){
-    const d = lastAvg - firstAvg;
-    const el = document.getElementById('s-avg-delta');
-    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
-    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
+  function setStatDelta(valId, deltaId, lastVal, firstVal, lowerIsBetter=true){
+    document.getElementById(valId).textContent = lastVal!==null ? fmtMin(lastVal) : '—';
+    if(lastVal!==null && firstVal!==null && n>1){
+      const d = lastVal - firstVal;
+      const el = document.getElementById(deltaId);
+      el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
+      el.className = 'sub ' + (lowerIsBetter ? (d<=0?'delta-down':'delta-up') : (d>=0?'delta-down':'delta-up'));
+    }
   }
 
-  // ig
-  const lastIG = findApp(last,'instagram');
-  const firstIG = findApp(first,'instagram');
-  document.getElementById('s-ig').textContent = lastIG!==null ? fmtMin(lastIG) : '—';
-  if(lastIG!==null && firstIG!==null && n>1){
-    const d = lastIG - firstIG;
-    const el = document.getElementById('s-ig-delta');
-    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
-    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
-  }
-
-  // forest
-  const lastF = findApp(last,'forest');
-  const firstF = findApp(first,'forest');
-  document.getElementById('s-forest').textContent = lastF!==null ? fmtMin(lastF) : '—';
-  if(lastF!==null && firstF!==null && n>1){
-    const d = lastF - firstF;
-    const el = document.getElementById('s-forest-delta');
-    el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
-    el.className = 'sub ' + (d<=0?'delta-down':'delta-up');
-  }
-}
-
-function getChartData(){
-  const labels = weeks.map(weekLabel);
-  if(activeTab==='avg'){
-    return {
-      labels,
-      data: weeks.map(w=>{ const v=parseHM(w.dailyAvg); return v!==null?+(v/60).toFixed(2):null; }),
-      color:'#a9462f', label:'Daily avg (hrs)'
-    };
-  }
-  if(activeTab==='ig'){
-    return {
-      labels,
-      data: weeks.map(w=>{ const v=findApp(w,'instagram'); return v!==null?+(v/60).toFixed(2):null; }),
-      color:'#a9462f', label:'Instagram (hrs)'
-    };
-  }
-  return {
-    labels,
-    data: weeks.map(w=>{ const v=findApp(w,'forest'); return v!==null?+(v/60).toFixed(2):null; }),
-    color:'#3f6b52', label:'Forest focus (hrs)'
-  };
+  setStatDelta('s-avg','s-avg-delta', parseHM(last.dailyAvg), parseHM(first.dailyAvg), true);
+  setStatDelta('s-ig','s-ig-delta', findApp(last,'instagram'), findApp(first,'instagram'), true);
+  setStatDelta('s-focus','s-focus-delta', parseHM(last.focus||''), parseHM(first.focus||''), false);
 }
 
 function renderChart(){
@@ -386,13 +316,23 @@ function renderChart(){
     return;
   }
   empty.style.display='none'; canvas.style.display='block';
-  const {labels,data,color,label} = getChartData();
+
+  const labels = weeks.map(weekLabel);
+  let data, color, label;
+
+  if(activeTab==='avg'){
+    data = weeks.map(w=>{ const v=parseHM(w.dailyAvg); return v!==null?+(v/60).toFixed(2):null; });
+    color='#a9462f'; label='Daily avg (hrs)';
+  } else {
+    data = weeks.map(w=>{ const v=parseHM(w.focus||''); return v!==null?+(v/60).toFixed(2):null; });
+    color='#3f6b52'; label='Focus time (hrs)';
+  }
+
   if(chartInst) chartInst.destroy();
   chartInst = new Chart(canvas, {
     type:'line',
     data:{ labels, datasets:[{
-      label, data,
-      borderColor:color, backgroundColor:color+'22',
+      label, data, borderColor:color, backgroundColor:color+'22',
       borderWidth:2, fill:true, tension:0.3,
       pointRadius:4, pointBackgroundColor:color, spanGaps:true
     }]},
@@ -410,7 +350,7 @@ function renderChart(){
 function renderTable(){
   const tbody = document.getElementById('tableBody');
   if(weeks.length===0){
-    tbody.innerHTML='<tr><td colspan="5" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>';
     return;
   }
   tbody.innerHTML = weeks.slice().reverse().map(w=>{
@@ -419,13 +359,13 @@ function renderTable(){
       <td style="white-space:nowrap;">${weekLabel(w)}</td>
       <td style="white-space:nowrap;">${w.dailyAvg}</td>
       <td style="white-space:nowrap;">${w.total}</td>
+      <td style="white-space:nowrap;">${w.focus||'—'}</td>
       <td>${chips}</td>
       <td class="note-cell">${w.note||''}</td>
     </tr>`;
   }).join('');
 }
 
-/* ── TABS ── */
 document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -435,12 +375,16 @@ document.querySelectorAll('.tab').forEach(btn=>{
   });
 });
 
-/* ── MODAL ── */
 function openModal(){
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('appRows').innerHTML='';
   addAppRow(); addAppRow(); addAppRow();
-  document.getElementById('weekForm').reset();
+  document.getElementById('weekStart').value='';
+  document.getElementById('weekEnd').value='';
+  document.getElementById('dailyAvg').value='';
+  document.getElementById('totalTime').value='';
+  document.getElementById('focusTime').value='';
+  document.getElementById('weekNote').value='';
 }
 function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
 document.getElementById('openModalBtn').addEventListener('click', openModal);
@@ -466,20 +410,20 @@ document.getElementById('saveWeekBtn').addEventListener('click',()=>{
   const end = document.getElementById('weekEnd').value;
   const dailyAvg = document.getElementById('dailyAvg').value.trim();
   const total = document.getElementById('totalTime').value.trim();
+  const focus = document.getElementById('focusTime').value.trim();
   const note = document.getElementById('weekNote').value.trim();
   if(!start||!end||!dailyAvg||!total){ alert('Please fill week dates, daily avg, and total.'); return; }
   const apps = [...document.querySelectorAll('.app-row')].map(r=>({
     name:r.querySelector('.appName').value.trim(),
     time:r.querySelector('.appTime').value.trim()
   })).filter(a=>a.name&&a.time);
-  weeks.push({start,end,dailyAvg,total,apps,note});
+  weeks.push({start,end,dailyAvg,total,focus,apps,note});
   saveLocal();
   document.getElementById('lastSaved').textContent = 'saved ' + new Date().toLocaleTimeString();
   closeModal();
   renderAll();
 });
 
-/* ── DATA FILE LOAD/DOWNLOAD ── */
 document.getElementById('loadBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
 document.getElementById('fileInput').addEventListener('change', async e=>{
   const file = e.target.files[0]; if(!file) return;
@@ -491,7 +435,7 @@ document.getElementById('fileInput').addEventListener('change', async e=>{
     renderAll();
     document.getElementById('storageDot').textContent = '● data.json loaded';
     document.getElementById('storageDot').className = 'storage-dot ok';
-  }catch(err){ alert("Couldn't read that file — make sure it's a valid data.json from this dashboard."); }
+  }catch(err){ alert("Couldn't read that file."); }
   e.target.value='';
 });
 document.getElementById('downloadBtn').addEventListener('click',()=>{
@@ -501,7 +445,6 @@ document.getElementById('downloadBtn').addEventListener('click',()=>{
   URL.revokeObjectURL(url);
 });
 
-/* ── INIT ── */
 loadLocal();
 renderAll();
 </script>
