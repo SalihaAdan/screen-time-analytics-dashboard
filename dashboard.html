@@ -6,199 +6,302 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
 :root{
-  --ink:#1b1d22; --paper:#f6f4ef; --line:#d9d4c7;
-  --accent:#3f6b52; --warn:#a9462f;
-  --muted:#7a766c; --card:#ffffff;
+  --bg:#e8ecf0;
+  --shadow-light:#ffffff;
+  --shadow-dark:#b8bec7;
+  --ink:#3d4554;
+  --ink-soft:#7a8394;
+  --accent:#5b8dee;
+  --accent-soft:#dce8fd;
+  --green:#4caf82;
+  --warn:#e07b5a;
+  --card:#edf0f4;
+  --radius:16px;
+  --radius-sm:10px;
 }
-*{box-sizing:border-box; margin:0; padding:0;}
-html,body{height:100%; overflow:hidden; background:var(--paper); color:var(--ink); font-family:'Georgia',serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:'Segoe UI',system-ui,sans-serif;}
 
+/* ── SHADOWS ── */
+.neu{
+  background:var(--bg);
+  box-shadow:6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+  border-radius:var(--radius);
+}
+.neu-inset{
+  background:var(--bg);
+  box-shadow:inset 4px 4px 10px var(--shadow-dark), inset -4px -4px 10px var(--shadow-light);
+  border-radius:var(--radius-sm);
+}
+.neu-btn{
+  background:var(--bg);
+  box-shadow:4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+  border:none; border-radius:var(--radius-sm);
+  cursor:pointer; font-family:inherit; transition:box-shadow .15s,transform .1s;
+}
+.neu-btn:hover{box-shadow:5px 5px 12px var(--shadow-dark),-5px -5px 12px var(--shadow-light);}
+.neu-btn:active{
+  box-shadow:inset 3px 3px 8px var(--shadow-dark),inset -3px -3px 8px var(--shadow-light);
+  transform:scale(0.98);
+}
+.neu-btn.accent{
+  background:linear-gradient(135deg,#6b9df5,#4a7ce0);
+  box-shadow:4px 4px 10px var(--shadow-dark),-4px -4px 10px var(--shadow-light);
+  color:#fff;
+}
+
+/* ── LAYOUT ── */
 .shell{
   height:100vh;
   display:grid;
-  grid-template-rows:auto auto 1fr auto;
+  grid-template-rows:72px auto 1fr 36px;
   grid-template-columns:1fr 1fr;
   grid-template-areas:
     "header header"
     "stats  stats"
     "chart  table"
     "footer footer";
+  gap:0;
+  padding:16px;
+  gap:12px;
 }
 
+/* ── HEADER ── */
 header{
   grid-area:header;
-  padding:14px 28px 12px;
-  border-bottom:1px solid var(--line);
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 20px;
 }
-header h1{font-size:20px; font-weight:400; letter-spacing:-0.01em;}
-header p{font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em;}
-.hdr-right{display:flex; gap:10px; align-items:center;}
+.hdr-left h1{font-size:18px;font-weight:600;color:var(--ink);letter-spacing:-0.02em;}
+.hdr-left p{font-size:11px;color:var(--ink-soft);margin-top:2px;letter-spacing:0.04em;text-transform:uppercase;}
+.hdr-right{display:flex;gap:10px;align-items:center;}
 .btn-sm{
-  font-family:inherit; font-size:12px; padding:6px 12px; cursor:pointer;
-  border:1px solid var(--line); background:var(--card); color:var(--ink);
+  font-size:12px;padding:8px 14px;color:var(--ink-soft);
+  font-weight:500;
 }
-.btn-sm.primary{background:var(--ink); color:var(--paper); border-color:var(--ink);}
-.btn-sm:hover{opacity:0.8;}
-.storage-dot{font-size:11px; color:var(--muted); font-family:monospace;}
-.storage-dot.ok{color:var(--accent);}
+.btn-sm.accent{color:#fff;font-size:12px;padding:8px 16px;font-weight:600;}
+.storage-dot{font-size:11px;color:var(--ink-soft);margin-right:4px;}
+.storage-dot.ok{color:var(--green);}
 
+/* ── STATS ── */
 .stats{
   grid-area:stats;
-  display:grid; grid-template-columns:repeat(4,1fr);
-  border-bottom:1px solid var(--line);
+  display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
 }
-.stat{padding:12px 20px; border-right:1px solid var(--line);}
-.stat:last-child{border-right:none;}
-.stat .lbl{font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted);}
-.stat .val{font-size:22px; margin-top:3px;}
-.stat .sub{font-size:11px; color:var(--muted); margin-top:2px;}
-.delta-down{color:var(--accent);}
-.delta-up{color:var(--warn);}
+.stat{
+  padding:14px 18px;
+}
+.stat .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--ink-soft);font-weight:600;}
+.stat .val{font-size:24px;font-weight:300;margin-top:6px;color:var(--ink);}
+.stat .sub{font-size:11px;margin-top:4px;color:var(--ink-soft);}
+.delta-down{color:var(--green)!important;}
+.delta-up{color:var(--warn)!important;}
 
+/* ── CHART PANEL ── */
 .chart-panel{
   grid-area:chart;
-  border-right:1px solid var(--line);
-  display:flex; flex-direction:column;
+  padding:16px;
+  display:flex;flex-direction:column;gap:12px;
   overflow:hidden;
 }
-.tabs{display:flex; border-bottom:1px solid var(--line);}
-.tab{
-  flex:1; padding:9px 0; text-align:center; font-size:12px;
-  text-transform:uppercase; letter-spacing:0.07em; cursor:pointer;
-  background:none; border:none; border-right:1px solid var(--line);
-  color:var(--muted); font-family:inherit;
+.tabs{
+  display:flex;gap:8px;
 }
-.tab:last-child{border-right:none;}
-.tab.active{background:var(--card); color:var(--ink); font-weight:bold;}
-.chart-wrap{flex:1; padding:16px; position:relative; min-height:0;}
-.chart-wrap canvas{width:100%!important; height:100%!important;}
+.tab{
+  flex:1;padding:9px 0;text-align:center;font-size:11px;
+  text-transform:uppercase;letter-spacing:0.07em;
+  color:var(--ink-soft);font-weight:600;
+}
+.tab.active{
+  background:linear-gradient(135deg,#6b9df5,#4a7ce0);
+  color:#fff;
+  box-shadow:3px 3px 8px var(--shadow-dark),-1px -1px 4px var(--shadow-light);
+}
+.chart-wrap{
+  flex:1;position:relative;min-height:0;
+  padding:12px;
+}
+.chart-wrap canvas{width:100%!important;height:100%!important;}
 .empty-chart{
-  position:absolute; inset:0; display:flex; align-items:center;
-  justify-content:center; color:var(--muted); font-style:italic; font-size:14px;
+  position:absolute;inset:0;display:flex;align-items:center;
+  justify-content:center;color:var(--ink-soft);font-size:14px;
 }
 
+/* ── TABLE PANEL ── */
 .table-panel{
   grid-area:table;
-  display:flex; flex-direction:column;
+  padding:16px;
+  display:flex;flex-direction:column;gap:10px;
   overflow:hidden;
 }
 .panel-label{
-  padding:9px 18px; font-size:10px; text-transform:uppercase;
-  letter-spacing:0.09em; color:var(--muted); border-bottom:1px solid var(--line);
-  background:#faf9f5;
+  font-size:10px;text-transform:uppercase;letter-spacing:0.08em;
+  color:var(--ink-soft);font-weight:600;padding-left:4px;
 }
-.table-scroll{flex:1; overflow-y:auto;}
-table{width:100%; border-collapse:collapse; font-size:12px;}
+.table-scroll{flex:1;overflow-y:auto;border-radius:var(--radius-sm);}
+.table-scroll::-webkit-scrollbar{width:4px;}
+.table-scroll::-webkit-scrollbar-track{background:transparent;}
+.table-scroll::-webkit-scrollbar-thumb{background:var(--shadow-dark);border-radius:4px;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
 th{
-  position:sticky; top:0; background:#faf9f5;
-  padding:7px 12px; text-align:left; font-size:10px;
-  text-transform:uppercase; letter-spacing:0.06em; color:var(--muted);
-  border-bottom:1px solid var(--line);
+  position:sticky;top:0;
+  padding:8px 12px;text-align:left;font-size:10px;
+  text-transform:uppercase;letter-spacing:0.06em;color:var(--ink-soft);font-weight:600;
+  background:var(--bg);
 }
-td{padding:7px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
-tr:last-child td{border-bottom:none;}
+td{padding:7px 12px;color:var(--ink);}
+tr{border-radius:8px;}
+tr:hover td{background:rgba(255,255,255,0.4);}
 .app-chip{
-  display:inline-block; background:var(--paper); border:1px solid var(--line);
-  border-radius:2px; padding:1px 5px; margin:1px 2px 1px 0; font-size:10px;
+  display:inline-block;
+  background:var(--bg);
+  box-shadow:2px 2px 5px var(--shadow-dark),-2px -2px 5px var(--shadow-light);
+  border-radius:6px;
+  padding:2px 6px;margin:1px 2px 1px 0;font-size:10px;color:var(--ink-soft);
 }
-.note-cell{color:var(--warn); font-size:11px; font-style:italic;}
+.note-cell{color:var(--warn);font-size:11px;font-style:italic;}
 
+/* ── FOOTER ── */
 footer{
   grid-area:footer;
-  padding:7px 28px;
-  border-top:1px solid var(--line);
-  display:flex; justify-content:space-between; align-items:center;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:0 8px;
 }
-footer span{font-size:11px; color:var(--muted);}
+footer span{font-size:11px;color:var(--ink-soft);}
 
+/* ── MODAL ── */
 .modal-overlay{
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.35); z-index:100;
-  align-items:center; justify-content:center;
+  display:none;position:fixed;inset:0;
+  background:rgba(180,190,200,0.5);backdrop-filter:blur(4px);
+  z-index:100;align-items:center;justify-content:center;
 }
 .modal-overlay.open{display:flex;}
 .modal{
-  background:var(--card); border:1px solid var(--line);
-  width:520px; max-width:95vw; max-height:90vh;
-  display:flex; flex-direction:column;
+  background:var(--bg);
+  box-shadow:12px 12px 30px var(--shadow-dark),-12px -12px 30px var(--shadow-light);
+  border-radius:20px;
+  width:520px;max-width:95vw;max-height:90vh;
+  display:flex;flex-direction:column;
+  overflow:hidden;
 }
 .modal-head{
-  padding:16px 20px; border-bottom:1px solid var(--line);
-  display:flex; justify-content:space-between; align-items:center;
+  padding:18px 22px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid rgba(0,0,0,0.06);
 }
-.modal-head h2{font-size:16px; font-weight:400;}
-.modal-close{background:none; border:none; font-size:20px; cursor:pointer; color:var(--muted);}
-.modal-body{padding:20px; overflow-y:auto; flex:1;}
-.form-row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
+.modal-head h2{font-size:16px;font-weight:600;color:var(--ink);}
+.modal-close{
+  background:none;border:none;font-size:22px;cursor:pointer;
+  color:var(--ink-soft);line-height:1;
+}
+.modal-body{padding:20px 22px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .form-row.full{grid-template-columns:1fr;}
-label{display:block; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); margin-bottom:4px;}
-input[type=text],input[type=date]{
-  width:100%; padding:8px 10px; border:1px solid var(--line);
-  background:var(--paper); font-family:inherit; font-size:13px; color:var(--ink);
+.field label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;margin-bottom:6px;}
+.field input[type=text],.field input[type=date]{
+  width:100%;padding:9px 13px;
+  background:var(--bg);
+  box-shadow:inset 3px 3px 7px var(--shadow-dark),inset -3px -3px 7px var(--shadow-light);
+  border:none;border-radius:var(--radius-sm);
+  font-family:inherit;font-size:13px;color:var(--ink);outline:none;
 }
-input:focus{outline:2px solid var(--accent); outline-offset:1px;}
-.app-row{display:grid; grid-template-columns:1fr 1fr auto; gap:8px; margin-bottom:6px; align-items:center;}
-.app-row button{
-  background:none; border:1px solid var(--line); color:var(--warn);
-  width:30px; height:34px; cursor:pointer; font-size:16px; line-height:1;
+.field input:focus{box-shadow:inset 3px 3px 7px var(--shadow-dark),inset -3px -3px 7px var(--shadow-light),0 0 0 2px #5b8dee55;}
+.apps-label{font-size:10px;text-transform:uppercase;letter-spacing:0.07em;color:var(--ink-soft);font-weight:600;}
+.app-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;}
+.app-row input[type=text]{
+  width:100%;padding:8px 11px;
+  background:var(--bg);
+  box-shadow:inset 2px 2px 6px var(--shadow-dark),inset -2px -2px 6px var(--shadow-light);
+  border:none;border-radius:var(--radius-sm);
+  font-family:inherit;font-size:12px;color:var(--ink);outline:none;
+}
+.app-row input:focus{box-shadow:inset 2px 2px 6px var(--shadow-dark),inset -2px -2px 6px var(--shadow-light),0 0 0 2px #5b8dee55;}
+.rm-app{
+  width:30px;height:32px;font-size:16px;
+  color:var(--warn);background:var(--bg);
+  box-shadow:2px 2px 6px var(--shadow-dark),-2px -2px 6px var(--shadow-light);
+  border:none;border-radius:8px;cursor:pointer;
 }
 .btn-add-app{
-  width:100%; padding:7px; background:none; border:1px dashed var(--line);
-  color:var(--muted); font-size:12px; cursor:pointer; margin:6px 0 14px; font-family:inherit;
+  width:100%;padding:8px;
+  background:var(--bg);
+  box-shadow:inset 2px 2px 6px var(--shadow-dark),inset -2px -2px 6px var(--shadow-light);
+  border:none;border-radius:var(--radius-sm);
+  color:var(--ink-soft);font-size:12px;cursor:pointer;font-family:inherit;
+  margin-top:4px;
 }
 .modal-foot{
-  padding:14px 20px; border-top:1px solid var(--line);
-  display:flex; gap:10px; justify-content:flex-end;
+  padding:14px 22px;
+  border-top:1px solid rgba(0,0,0,0.06);
+  display:flex;gap:10px;justify-content:flex-end;
 }
-.btn-full{
-  font-family:inherit; font-size:13px; padding:9px 18px; cursor:pointer;
-  border:1px solid var(--ink); background:var(--ink); color:var(--paper);
+.btn-modal{
+  font-family:inherit;font-size:13px;padding:9px 20px;
+  border-radius:var(--radius-sm);font-weight:500;
 }
-.btn-cancel{background:var(--card); color:var(--ink);}
+.btn-modal.cancel{color:var(--ink-soft);}
+.btn-modal.save{color:#fff;}
 input[type=file]{display:none;}
 </style>
 </head>
 <body>
 <div class="shell">
 
-  <header>
-    <div>
+  <header class="neu">
+    <div class="hdr-left">
       <h1>Screen Time</h1>
       <p>your weekly record</p>
     </div>
     <div class="hdr-right">
       <span class="storage-dot" id="storageDot">● browser storage</span>
-      <button class="btn-sm" id="loadBtn">Load data.json</button>
-      <button class="btn-sm" id="downloadBtn">Download data.json</button>
-      <button class="btn-sm primary" id="openModalBtn">+ Add Week</button>
+      <button class="neu-btn btn-sm" id="loadBtn">Load data.json</button>
+      <button class="neu-btn btn-sm" id="downloadBtn">Download data.json</button>
+      <button class="neu-btn btn-sm accent" id="openModalBtn">+ Add Week</button>
     </div>
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="lbl">Weeks logged</div><div class="val" id="s-weeks">—</div><div class="sub" id="s-range">no data yet</div></div>
-    <div class="stat"><div class="lbl">Latest daily avg</div><div class="val" id="s-avg">—</div><div class="sub" id="s-avg-delta"></div></div>
-    <div class="stat"><div class="lbl">Latest Instagram</div><div class="val" id="s-ig">—</div><div class="sub" id="s-ig-delta"></div></div>
-    <div class="stat"><div class="lbl">Latest focus time</div><div class="val" id="s-focus">—</div><div class="sub" id="s-focus-delta"></div></div>
+    <div class="stat neu">
+      <div class="lbl">Weeks logged</div>
+      <div class="val" id="s-weeks">—</div>
+      <div class="sub" id="s-range">no data yet</div>
+    </div>
+    <div class="stat neu">
+      <div class="lbl">Latest daily avg</div>
+      <div class="val" id="s-avg">—</div>
+      <div class="sub" id="s-avg-delta"></div>
+    </div>
+    <div class="stat neu">
+      <div class="lbl">Latest Instagram</div>
+      <div class="val" id="s-ig">—</div>
+      <div class="sub" id="s-ig-delta"></div>
+    </div>
+    <div class="stat neu">
+      <div class="lbl">Latest focus time</div>
+      <div class="val" id="s-focus">—</div>
+      <div class="sub" id="s-focus-delta"></div>
+    </div>
   </div>
 
-  <div class="chart-panel">
+  <div class="chart-panel neu">
     <div class="tabs">
-      <button class="tab active" data-tab="avg">Daily Average</button>
-      <button class="tab" data-tab="focus">Focus</button>
+      <button class="tab neu-btn active" data-tab="avg">Daily Average</button>
+      <button class="tab neu-btn" data-tab="focus">Focus</button>
     </div>
-    <div class="chart-wrap">
+    <div class="chart-wrap neu-inset">
       <div class="empty-chart" id="emptyChart">No data yet — add your first week</div>
       <canvas id="mainChart" style="display:none;"></canvas>
     </div>
   </div>
 
-  <div class="table-panel">
+  <div class="table-panel neu">
     <div class="panel-label">All weeks</div>
-    <div class="table-scroll">
+    <div class="table-scroll neu-inset">
       <table>
         <thead><tr><th>Week</th><th>Avg</th><th>Total</th><th>Focus</th><th>Apps</th><th>Note</th></tr></thead>
-        <tbody id="tableBody"><tr><td colspan="6" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr></tbody>
+        <tbody id="tableBody">
+          <tr><td colspan="6" style="color:var(--ink-soft);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>
+        </tbody>
       </table>
     </div>
   </div>
@@ -217,24 +320,24 @@ input[type=file]{display:none;}
     </div>
     <div class="modal-body">
       <div class="form-row">
-        <div><label>Week start</label><input type="date" id="weekStart" required></div>
-        <div><label>Week end</label><input type="date" id="weekEnd" required></div>
+        <div class="field"><label>Week start</label><input type="date" id="weekStart"></div>
+        <div class="field"><label>Week end</label><input type="date" id="weekEnd"></div>
       </div>
       <div class="form-row">
-        <div><label>Daily avg (e.g. 5h 46m)</label><input type="text" id="dailyAvg" placeholder="5h 46m" required></div>
-        <div><label>Total screen time</label><input type="text" id="totalTime" placeholder="40h 26m" required></div>
+        <div class="field"><label>Daily avg</label><input type="text" id="dailyAvg" placeholder="5h 46m"></div>
+        <div class="field"><label>Total screen time</label><input type="text" id="totalTime" placeholder="40h 26m"></div>
       </div>
       <div class="form-row">
-        <div><label>Focus time (from Forest app)</label><input type="text" id="focusTime" placeholder="e.g. 8h 30m"></div>
-        <div><label>Note (optional)</label><input type="text" id="weekNote" placeholder='e.g. "Eid week"'></div>
+        <div class="field"><label>Focus time (Forest)</label><input type="text" id="focusTime" placeholder="8h 30m"></div>
+        <div class="field"><label>Note (optional)</label><input type="text" id="weekNote" placeholder='e.g. "Eid week"'></div>
       </div>
-      <label style="margin-top:4px;">App breakdown</label>
-      <div id="appRows" style="margin-top:8px;"></div>
-      <button type="button" class="btn-add-app" id="addAppBtn">+ add app</button>
+      <div class="apps-label">App breakdown</div>
+      <div id="appRows" style="display:flex;flex-direction:column;gap:6px;"></div>
+      <button class="btn-add-app" id="addAppBtn">+ add app</button>
     </div>
     <div class="modal-foot">
-      <button class="btn-full btn-cancel" id="cancelModal">Cancel</button>
-      <button class="btn-full" id="saveWeekBtn">Save week</button>
+      <button class="neu-btn btn-modal cancel" id="cancelModal">Cancel</button>
+      <button class="neu-btn btn-modal save accent" id="saveWeekBtn">Save week</button>
     </div>
   </div>
 </div>
@@ -242,120 +345,106 @@ input[type=file]{display:none;}
 <input type="file" id="fileInput" accept=".json">
 
 <script>
-let weeks = [];
-let activeTab = 'avg';
-let chartInst = null;
+let weeks=[], activeTab='avg', chartInst=null;
 
-function saveLocal(){ localStorage.setItem('st_weeks', JSON.stringify(weeks)); }
+function saveLocal(){localStorage.setItem('st_weeks',JSON.stringify(weeks));}
 function loadLocal(){
-  const s = localStorage.getItem('st_weeks');
-  if(s){ try{ weeks = JSON.parse(s); }catch(e){ weeks=[]; } }
-  else{ weeks=[]; }
+  const s=localStorage.getItem('st_weeks');
+  if(s){try{weeks=JSON.parse(s);}catch(e){weeks=[];}}else{weeks=[];}
 }
-
 function parseHM(str){
-  if(!str) return null;
-  const h=/(\d+)\s*h/i.exec(str), m=/(\d+)\s*m/i.exec(str);
-  if(!h && !m) return null;
-  return (h?parseInt(h[1]):0)*60+(m?parseInt(m[1]):0);
+  if(!str)return null;
+  const h=/(\d+)\s*h/i.exec(str),m=/(\d+)\s*m/i.exec(str);
+  if(!h&&!m)return null;
+  return(h?parseInt(h[1]):0)*60+(m?parseInt(m[1]):0);
 }
 function fmtMin(min){
-  if(min===null||min===undefined) return '—';
-  return `${Math.floor(min/60)}h ${Math.round(min%60)}m`;
+  if(min===null||min===undefined)return'—';
+  return`${Math.floor(min/60)}h ${Math.round(min%60)}m`;
 }
-function findApp(week, key){
-  const a = week.apps.find(x=>x.name.toLowerCase().includes(key));
-  return a ? parseHM(a.time) : null;
+function findApp(week,key){
+  const a=week.apps.find(x=>x.name.toLowerCase().includes(key));
+  return a?parseHM(a.time):null;
 }
 function weekLabel(w){
-  const fmt = d => new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
-  return `${fmt(w.start)} – ${fmt(w.end)}`;
+  const fmt=d=>new Date(d+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return`${fmt(w.start)} – ${fmt(w.end)}`;
 }
 
 function renderAll(){
   weeks.sort((a,b)=>new Date(a.start)-new Date(b.start));
-  renderStats();
-  renderChart();
-  renderTable();
+  renderStats();renderChart();renderTable();
+}
+
+function setStatDelta(valId,deltaId,lastVal,firstVal,lowerIsBetter,n){
+  document.getElementById(valId).textContent=lastVal!==null?fmtMin(lastVal):'—';
+  if(lastVal!==null&&firstVal!==null&&n>1){
+    const d=lastVal-firstVal,el=document.getElementById(deltaId);
+    el.textContent=`${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
+    el.className='sub '+(lowerIsBetter?(d<=0?'delta-down':'delta-up'):(d>=0?'delta-down':'delta-up'));
+  }
 }
 
 function renderStats(){
-  const n = weeks.length;
-  document.getElementById('s-weeks').textContent = n || '—';
+  const n=weeks.length;
+  document.getElementById('s-weeks').textContent=n||'—';
   if(n===0){
-    document.getElementById('s-range').textContent = 'no data yet';
+    document.getElementById('s-range').textContent='no data yet';
     ['s-avg','s-ig','s-focus'].forEach(id=>document.getElementById(id).textContent='—');
     ['s-avg-delta','s-ig-delta','s-focus-delta'].forEach(id=>document.getElementById(id).textContent='');
     return;
   }
-  document.getElementById('s-range').textContent = `${weekLabel(weeks[0])} → ${weekLabel(weeks[n-1])}`;
-
-  const last = weeks[n-1], first = weeks[0];
-
-  function setStatDelta(valId, deltaId, lastVal, firstVal, lowerIsBetter=true){
-    document.getElementById(valId).textContent = lastVal!==null ? fmtMin(lastVal) : '—';
-    if(lastVal!==null && firstVal!==null && n>1){
-      const d = lastVal - firstVal;
-      const el = document.getElementById(deltaId);
-      el.textContent = `${d<=0?'↓':'↑'} ${fmtMin(Math.abs(d))} vs wk 1`;
-      el.className = 'sub ' + (lowerIsBetter ? (d<=0?'delta-down':'delta-up') : (d>=0?'delta-down':'delta-up'));
-    }
-  }
-
-  setStatDelta('s-avg','s-avg-delta', parseHM(last.dailyAvg), parseHM(first.dailyAvg), true);
-  setStatDelta('s-ig','s-ig-delta', findApp(last,'instagram'), findApp(first,'instagram'), true);
-  setStatDelta('s-focus','s-focus-delta', parseHM(last.focus||''), parseHM(first.focus||''), false);
+  document.getElementById('s-range').textContent=`${weekLabel(weeks[0])} → ${weekLabel(weeks[n-1])}`;
+  const last=weeks[n-1],first=weeks[0];
+  setStatDelta('s-avg','s-avg-delta',parseHM(last.dailyAvg),parseHM(first.dailyAvg),true,n);
+  setStatDelta('s-ig','s-ig-delta',findApp(last,'instagram'),findApp(first,'instagram'),true,n);
+  setStatDelta('s-focus','s-focus-delta',parseHM(last.focus||''),parseHM(first.focus||''),false,n);
 }
 
 function renderChart(){
-  const empty = document.getElementById('emptyChart');
-  const canvas = document.getElementById('mainChart');
+  const empty=document.getElementById('emptyChart'),canvas=document.getElementById('mainChart');
   if(weeks.length===0){
-    empty.style.display='flex'; canvas.style.display='none';
-    if(chartInst){ chartInst.destroy(); chartInst=null; }
-    return;
+    empty.style.display='flex';canvas.style.display='none';
+    if(chartInst){chartInst.destroy();chartInst=null;}return;
   }
-  empty.style.display='none'; canvas.style.display='block';
-
-  const labels = weeks.map(weekLabel);
-  let data, color, label;
-
+  empty.style.display='none';canvas.style.display='block';
+  const labels=weeks.map(weekLabel);
+  let data,color,label;
   if(activeTab==='avg'){
-    data = weeks.map(w=>{ const v=parseHM(w.dailyAvg); return v!==null?+(v/60).toFixed(2):null; });
-    color='#a9462f'; label='Daily avg (hrs)';
-  } else {
-    data = weeks.map(w=>{ const v=parseHM(w.focus||''); return v!==null?+(v/60).toFixed(2):null; });
-    color='#3f6b52'; label='Focus time (hrs)';
+    data=weeks.map(w=>{const v=parseHM(w.dailyAvg);return v!==null?+(v/60).toFixed(2):null;});
+    color='#e07b5a';label='Daily avg (hrs)';
+  }else{
+    data=weeks.map(w=>{const v=parseHM(w.focus||'');return v!==null?+(v/60).toFixed(2):null;});
+    color='#4caf82';label='Focus time (hrs)';
   }
-
-  if(chartInst) chartInst.destroy();
-  chartInst = new Chart(canvas, {
+  if(chartInst)chartInst.destroy();
+  chartInst=new Chart(canvas,{
     type:'line',
-    data:{ labels, datasets:[{
-      label, data, borderColor:color, backgroundColor:color+'22',
-      borderWidth:2, fill:true, tension:0.3,
-      pointRadius:4, pointBackgroundColor:color, spanGaps:true
-    }]},
+    data:{labels,datasets:[{label,data,borderColor:color,backgroundColor:color+'22',
+      borderWidth:2,fill:true,tension:0.4,pointRadius:5,
+      pointBackgroundColor:'#fff',pointBorderColor:color,pointBorderWidth:2,spanGaps:true}]},
     options:{
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{display:false} },
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
       scales:{
-        y:{ beginAtZero:true, title:{display:true,text:'hours'}, grid:{color:'#eee'} },
-        x:{ grid:{display:false}, ticks:{font:{size:10}} }
+        y:{beginAtZero:true,title:{display:true,text:'hours'},
+          grid:{color:'rgba(0,0,0,0.04)'},
+          ticks:{color:'#7a8394',font:{size:10}}},
+        x:{grid:{display:false},ticks:{color:'#7a8394',font:{size:10}}}
       }
     }
   });
 }
 
 function renderTable(){
-  const tbody = document.getElementById('tableBody');
+  const tbody=document.getElementById('tableBody');
   if(weeks.length===0){
-    tbody.innerHTML='<tr><td colspan="6" style="color:var(--muted);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="6" style="color:var(--ink-soft);font-style:italic;padding:20px 12px;">No weeks logged yet.</td></tr>';
     return;
   }
-  tbody.innerHTML = weeks.slice().reverse().map(w=>{
-    const chips = w.apps.map(a=>`<span class="app-chip">${a.name} ${a.time}</span>`).join('');
-    return `<tr>
+  tbody.innerHTML=weeks.slice().reverse().map(w=>{
+    const chips=w.apps.map(a=>`<span class="app-chip">${a.name} ${a.time}</span>`).join('');
+    return`<tr>
       <td style="white-space:nowrap;">${weekLabel(w)}</td>
       <td style="white-space:nowrap;">${w.dailyAvg}</td>
       <td style="white-space:nowrap;">${w.total}</td>
@@ -370,7 +459,7 @@ document.querySelectorAll('.tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
     btn.classList.add('active');
-    activeTab = btn.dataset.tab;
+    activeTab=btn.dataset.tab;
     renderChart();
   });
 });
@@ -378,75 +467,67 @@ document.querySelectorAll('.tab').forEach(btn=>{
 function openModal(){
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('appRows').innerHTML='';
-  addAppRow(); addAppRow(); addAppRow();
-  document.getElementById('weekStart').value='';
-  document.getElementById('weekEnd').value='';
-  document.getElementById('dailyAvg').value='';
-  document.getElementById('totalTime').value='';
-  document.getElementById('focusTime').value='';
-  document.getElementById('weekNote').value='';
+  ['weekStart','weekEnd','dailyAvg','totalTime','focusTime','weekNote'].forEach(id=>document.getElementById(id).value='');
+  addAppRow();addAppRow();addAppRow();
 }
-function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
-document.getElementById('openModalBtn').addEventListener('click', openModal);
-document.getElementById('closeModal').addEventListener('click', closeModal);
-document.getElementById('cancelModal').addEventListener('click', closeModal);
-document.getElementById('modalOverlay').addEventListener('click', e=>{ if(e.target===e.currentTarget) closeModal(); });
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+document.getElementById('openModalBtn').addEventListener('click',openModal);
+document.getElementById('closeModal').addEventListener('click',closeModal);
+document.getElementById('cancelModal').addEventListener('click',closeModal);
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
 function addAppRow(name='',time=''){
-  const container = document.getElementById('appRows');
-  const row = document.createElement('div');
+  const container=document.getElementById('appRows');
+  const row=document.createElement('div');
   row.className='app-row';
   row.innerHTML=`
     <input type="text" placeholder="App name" class="appName" value="${name}">
     <input type="text" placeholder="e.g. 9h 22m" class="appTime" value="${time}">
-    <button type="button" class="rmApp">×</button>`;
-  row.querySelector('.rmApp').addEventListener('click',()=>row.remove());
+    <button type="button" class="rm-app">×</button>`;
+  row.querySelector('.rm-app').addEventListener('click',()=>row.remove());
   container.appendChild(row);
 }
 document.getElementById('addAppBtn').addEventListener('click',()=>addAppRow());
 
 document.getElementById('saveWeekBtn').addEventListener('click',()=>{
-  const start = document.getElementById('weekStart').value;
-  const end = document.getElementById('weekEnd').value;
-  const dailyAvg = document.getElementById('dailyAvg').value.trim();
-  const total = document.getElementById('totalTime').value.trim();
-  const focus = document.getElementById('focusTime').value.trim();
-  const note = document.getElementById('weekNote').value.trim();
-  if(!start||!end||!dailyAvg||!total){ alert('Please fill week dates, daily avg, and total.'); return; }
-  const apps = [...document.querySelectorAll('.app-row')].map(r=>({
+  const start=document.getElementById('weekStart').value;
+  const end=document.getElementById('weekEnd').value;
+  const dailyAvg=document.getElementById('dailyAvg').value.trim();
+  const total=document.getElementById('totalTime').value.trim();
+  const focus=document.getElementById('focusTime').value.trim();
+  const note=document.getElementById('weekNote').value.trim();
+  if(!start||!end||!dailyAvg||!total){alert('Please fill week dates, daily avg, and total.');return;}
+  const apps=[...document.querySelectorAll('.app-row')].map(r=>({
     name:r.querySelector('.appName').value.trim(),
     time:r.querySelector('.appTime').value.trim()
   })).filter(a=>a.name&&a.time);
   weeks.push({start,end,dailyAvg,total,focus,apps,note});
   saveLocal();
-  document.getElementById('lastSaved').textContent = 'saved ' + new Date().toLocaleTimeString();
-  closeModal();
-  renderAll();
+  document.getElementById('lastSaved').textContent='saved '+new Date().toLocaleTimeString();
+  closeModal();renderAll();
 });
 
 document.getElementById('loadBtn').addEventListener('click',()=>document.getElementById('fileInput').click());
-document.getElementById('fileInput').addEventListener('change', async e=>{
-  const file = e.target.files[0]; if(!file) return;
-  const text = await file.text();
+document.getElementById('fileInput').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  const text=await file.text();
   try{
-    const parsed = JSON.parse(text);
-    weeks = parsed.weeks || [];
-    saveLocal();
-    renderAll();
-    document.getElementById('storageDot').textContent = '● data.json loaded';
-    document.getElementById('storageDot').className = 'storage-dot ok';
-  }catch(err){ alert("Couldn't read that file."); }
+    const parsed=JSON.parse(text);
+    weeks=parsed.weeks||[];
+    saveLocal();renderAll();
+    document.getElementById('storageDot').textContent='● data.json loaded';
+    document.getElementById('storageDot').className='storage-dot ok';
+  }catch(err){alert("Couldn't read that file.");}
   e.target.value='';
 });
 document.getElementById('downloadBtn').addEventListener('click',()=>{
-  const blob = new Blob([JSON.stringify({weeks},null,2)],{type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href=url; a.download='data.json'; a.click();
+  const blob=new Blob([JSON.stringify({weeks},null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='data.json';a.click();
   URL.revokeObjectURL(url);
 });
 
-loadLocal();
-renderAll();
+loadLocal();renderAll();
 </script>
 </body>
 </html>
